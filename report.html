@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#2b6cb0" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/f/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/f/favicon-16x16.png" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+
+    <style>
+      :root {
+        --main-blue: #2b6cb0;
+        --light-blue: #d0eaff;
+        --bg: #f0f8ff;
+        --white: #ffffff;
+        --font: "Segoe UI", sans-serif;
+      }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        margin: 0;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+      .meshst {
+    display: none;
+     }
+
+      h2,
+      h3 {
+        color: var(--main-blue);
+        margin-top: 20px;
+      }
+      button {
+        padding: 12px;
+        font-size: 1rem;
+        background: #2b6cb0;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        width: 48%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: 0.2s ease-in-out;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+      .controls label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: bold;
+        color: var(--main-blue);
+      }
+      /* สไตล์สำหรับ radio buttons */
+      .radio-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-weight: bold;
+        color: var(--main-blue);
+        flex-wrap: wrap;
+      }
+      .radio-group input[type="radio"] {
+        margin-right: 5px;
+        transform: scale(1.2);
+      }
+      .radio-group label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: normal;
+        cursor: pointer;
+      }
+
+      /* ไม่มี form-mini สำหรับ date pickers โดยตรงแล้ว, Flatpickr จะสร้าง input ของมันเอง */
+      .form-control-date { /* คลาสสำหรับ input ของ Flatpickr */
+        width: 150px; /* ปรับความกว้างตามต้องการ */
+        padding: 8px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .form-control-date1 { /* คลาสสำหรับ input ของ Flatpickr */
+        width: 150px; /* ปรับความกว้างตามต้องการ */
+        padding: 8px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .table-wrapper {
+  overflow-x: auto;
+  background: var(--white);
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+  margin-top: 5px;
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+  /* เพิ่มคุณสมบัติเหล่านี้สำหรับการปรับขนาด */
+  resize: both; /* อนุญาตให้ปรับขนาดได้ทั้งแนวนอนและแนวตั้ง */
+  min-width: 348px; /* กำหนดความกว้างขั้นต่ำ (สามารถปรับค่าได้ตามต้องการ) */
+}
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        font-size: 0.7rem;
+      }
+
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 4px 2px;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+      }
+      th {
+        background: var(--light-blue);
+      }
+      .average-row {
+        background: #d0eaff!important;
+        font-weight: bold;
+      }
+
+      /* เพิ่มคลาสสำหรับสีใหม่ */
+      .highlight-pink {
+        background-color: #ffccff !important; /* ขัดB,C */
+      }
+      .highlight-cyan {
+        background-color: #99ccff !important; /* ยกล้างB,C */
+      }
+      .highlight-aquamarine {
+        background-color: #98FB98 !important; /* ล้างFM&Ro */
+      }
+      .highlight-teal {
+        background-color: #00FFFF !important; /* ยกล้างA,B,C */
+      }
+      .highlight-lightblue { /* คลาสใหม่สำหรับ #DDA0DD */
+        background-color: #DDA0DD !important; /* ขัดB,C,ล้างFM */
+      }
+
+      /* ความกว้างปรับใหม่ให้แคบลง */
+      table th:nth-child(1),
+      table td:nth-child(1) {
+        width: 12%;
+        min-width: 55px;
+      }
+      table th:nth-child(2),
+      table td:nth-child(2) {
+        width: 12%;
+        min-width: 40px;
+      }
+      table th:nth-child(3),
+      table td:nth-child(3) {
+        width: 18%;
+        min-width: 40px;
+      }
+      table th:nth-child(4),
+      table td:nth-child(4) {
+        width: 18%;
+        min-width: 40px;
+      }
+      table th:nth-child(5),
+      table td:nth-child(5) {
+        width: 12%;
+        min-width: 45px;
+      }
+      table th:nth-child(6),
+      table td:nth-child(6) {
+        width: 12%;
+        min-width: 45px;
+      }
+      table th:nth-child(7),
+      table td:nth-child(7) {
+        width: 12%;
+        min-width: 55px;
+      }
+      .date-input-group {
+  display: flex; /* ทำให้ label และ input อยู่ในบรรทัดเดียวกัน */
+  gap: 15px; /* ระยะห่างระหว่าง label กับ input */
+  align-items: flex-start; /* จัดให้ชิดซ้าย */
+  margin-right: 10px; /* เพิ่มระยะห่างด้านขวาถ้ามี input อื่นๆ ตามมา */
+}
+
+.date-input-group label {
+  font-weight: bold; /* ทำให้ label หนาขึ้นเหมือนเดิม */
+  color: var(--main-blue); /* สีเดียวกับ label อื่นๆ */
+  margin-bottom: 0; /* ลบ margin ด้านล่างของ label */
+  white-space: nowrap; /* ไม่ให้ข้อความ label ขึ้นบรรทัดใหม่ */
+}
+
+/* ปรับความกว้างของ input Date Picker ให้เหมาะสม */
+.form-control-date {
+  width: 150px; /* สามารถปรับได้ตามต้องการ */
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* ปรับ controls flexbox เพื่อรองรับการจัดกลุ่มใหม่ */
+.controls {
+  display: flex;
+  flex-wrap: wrap; /* ให้ขึ้นบรรทัดใหม่ได้ถ้าหน้าจอเล็ก */
+  gap: 16px; /* ระยะห่างระหว่างกลุ่ม control ต่างๆ */
+  margin-bottom: 12px;
+}
+
+      @media (max-width: 480px) {
+        .controls {
+          flex-direction: column;
+        }
+          .date-input-group {
+    width: 100%; /* ให้เต็มความกว้าง */
+    margin-right: 0; /* ลบ margin ด้านขวาออก */
+  }
+  .form-control-date {
+    width: 100%; /* input ให้เต็มความกว้าง */
+  }
+        table {
+          font-size: 0.6rem;
+          min-width: 320px;
+        }
+        th,
+        td {
+          padding: 3px 1px;
+        }
+        .form-control-date { /* ปรับความกว้างสำหรับมือถือ */
+          width: 30%;
+        }
+                .form-control-date1 { /* ปรับความกว้างสำหรับมือถือ */
+          width: 30%;
+        }
+      }
+      th.machine-date {
+        width: 60px;
+      }
+      th. {
+        width: 60px;
+      }
+      th.reject-col {
+        width: 60px;
+      }
+      th.cycleshift-col {
+        width: 60px;
+      }
+      th.cycletime-col {
+        width: 60px;
+      }
+      th.runtime-col {
+        width: 60px;
+      }
+      th.trim-col {
+        width: 60px;
+      }
+      th.shift-col {
+        width: 60px;
+      }
+      th {
+        text-align: center;
+        padding: 4px;
+      }
+      td {
+        text-align: center;
+        padding: 2px;
+      }
+      input.table-input {
+        width: 50px;
+        text-align: right;
+      }
+
+      .color-legend {
+        margin-top: 3px;
+        margin-inline: 5px;
+        padding: 0;
+        background: none;
+        box-shadow: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-start;
+        align-items: center;
+        font-size: 0.9rem;
+        color: var(--main-blue);
+        font-weight: bold;
+        display: none;
+      }
+
+      .legend-item {
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin: 0;
+        padding: 0;
+      }
+
+      .legend-color {
+        width: 10px;
+        height: 10px;
+        border-radius: 4px;
+        display: inline-block;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/th.js"></script>
+
+  </head>
+  <body>
+    <button onclick="window.location.href='/index.html?i=1'">🏠 หน้าหลัก</button>
+    <button onclick="window.location.href='/summary.html?i=1'">📄 บันทึกข้อมูลทั้งหมด</button>
+    <button onclick="window.location.href='/running.html?i=1'">⏳ Running Time</button>
+   <button onclick="window.location.href='/stamesh.html?i=1'">🪣 Mesh Creaning</button>
+        <h2 style="margin-top: 30px; font-size: 20px;">สรุปข้อมูล Cycle Time</h2>
+    <div class="controls">
+      <label>
+        📅 วันที่:
+        <input type="text" id="recentDatePicker" class="form-control-date" />
+      </label>
+      <div id="dateDisplayText" style="display: none;"></div>
+      <div class="radio-group">
+        🕑 กะ:
+        <label> <input type="radio" name="shiftOption" value="all" id="shiftAll" checked /> ทั้งหมด </label>
+        <label> <input type="radio" name="shiftOption" value="กะเช้า" id="shiftMorning" /> กะเช้า </label>
+        <label> <input type="radio" name="shiftOption" value="กะบ่าย" id="shiftAfternoon" /> กะบ่าย </label>
+        <label> <input type="radio" name="shiftOption" value="กะดึก" id="shiftNight" /> กะดึก </label>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table id="recentTable">
+        <thead>
+          <tr>
+            <th class="machine-col">Machine</th>
+            <th class="reject-col">Reject</th>
+            <th class="cycleshift-col">Cycle Shift</th>
+            <th class="cycletime-col">Cycle Time</th>
+            <th class="runtime-col">Run Time</th>
+            <th class="trim-col">Trim</th>
+            <th class="shift-col">Shift</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="color-legend">
+        <div class="legend-item">
+          <span class="legend-color highlight-teal"></span>
+          <span class="legend-text">ยกล้างA,B,C</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color highlight-lightblue"></span>
+          <span class="legend-text">ขัดB,C,ล้างFM</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color highlight-aquamarine"></span>
+          <span class="legend-text">ล้างFM&Ro</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color highlight-cyan"></span>
+          <span class="legend-text">ยกล้าง B,C</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color highlight-pink"></span>
+          <span class="legend-text">ขัดMold B,C</span>
+        </div>
+      </div>
+      <div style="margin-top: 10px; text-align: right;">
+      <button id="shareRecentImageBtn" class="btn btn-info btn-sm">
+        <i class="fas fa-share-alt"></i> 📤 แชร์รูปภาพ
+      </button>
+      <button id="exportRecentImageBtn" class="btn btn-primary btn-sm">
+        <i class="fas fa-download"></i> 📷 บันทึกรูปภาพ
+      </button>
+</div>
+    </div>
+<div class="meshst">
+  <h2 style="margin-top: 30px; font-size: 20px;">ผลรวม Run Time ตามสถานะ Mesh Status</h2>
+<div class="controls">
+    <label>
+        ⚙️ เครื่อง:
+        <select id="machineLetterSelect" class="form-mini">
+            <option value="all">ทั้งหมด</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+        </select>
+        <select id="machineNumberSelect" class="form-mini">
+            <option value="all">ทั้งหมด</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+        </select>
+    </label>
+    <div class="date-input-group">
+        <label for="summaryStartDatePicker">🗓️ ช่วงวันที่เริ่มต้น:</label>
+        <label for="summaryEndDatePicker">🗓️ ถึงวันที่:</label>
+    </div>
+    <div class="date-input-group">
+     <input type="text" id="summaryStartDatePicker" class="form-control-date" />
+     <input type="text" id="summaryEndDatePicker" class="form-control-date" />
+    </div>
+</div>
+<div class="table-wrapper">
+  <table id="summaryTable">
+    <thead>
+      <tr>
+        <th class="machine-date">Date</th>
+        <th>Machine</th>
+        <th>RunTime</th>
+        <th>Shift</th>
+        <th>Status</th>
+        <th>Sum Time</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div style="text-align: center; margin-top: 10px;">
+    <button onclick="shareSummaryImage()">📤 แชร์รูปภาพผลรวม</button>
+    <button onclick="exportSummaryImage()">📷 บันทึกรูปภาพผลรวม</button>
+  </div>
+</div>
+</div>
+
+
+      <script>
+      let allData = [],
+        lastCanvas = null,
+        lastMachineCount = 0;
+      let dataTable; // สำหรับ recentTable
+      let summaryDataTable; // สำหรับ summaryTable
+
+      // Global Flatpickr instances for easy access
+      let recentDatePickerInstance;
+      let summaryStartDatePickerInstance;
+      let summaryEndDatePickerInstance;
+
+      $.extend($.fn.dataTable.ext.type.order, {
+        "machine-sort-asc": function (a, b) {
+          const re = /^([A-Za-z]+)(\d+)$/;
+          const matchA = a.match(re);
+          const matchB = b.match(re);
+
+          if (!matchA || !matchB) {
+            return a.localeCompare(b);
+          }
+
+          const [_, charA, numA] = matchA;
+          const [__, charB, numB] = matchB;
+
+          if (charA === charB) {
+            return parseInt(numA) - parseInt(numB);
+          }
+          return charA.localeCompare(charB);
+        },
+        "machine-sort-desc": function (a, b) {
+          const re = /^([A-Za-z]+)(\d+)$/;
+          const matchA = a.match(re);
+          const matchB = b.match(re);
+
+          if (!matchA || !matchB) {
+            return b.localeCompare(a);
+          }
+
+          const [_, charA, numA] = matchA;
+          const [__, charB, numB] = matchB;
+
+          if (charA === charB) {
+            return parseInt(numB) - parseInt(numA);
+          }
+          return charB.localeCompare(charA);
+        },
+      });
+
+      async function loadData() {
+        try {
+          // *** สำคัญ: แทนที่ด้วย API Key จริงของคุณ ***
+          const apiKey = "AIzaSyB_Jrjw4_H6qm4QTUUSCcz5z2A7xGL_dAQ"; // <--- ตรวจสอบตรงนี้!
+          const spreadsheetId = "1Nmcrwydbke_qMdMqYEH2Mk85MQzy3bsRQVSfLKP5Edw"; // Replace with your actual Spreadsheet ID
+          const range = "Cycle_Time!A2:L"; // Adjust range if your data changes
+
+          const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}`;
+          
+          const res = await fetch(url);
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`HTTP error! status: ${res.status}, Message: ${errorText}`);
+          }
+          const json = await res.json();
+          allData = json.values || [];
+          console.log("All data loaded:", allData);
+          // การเรียก updateRecentTableDisplay() และ calculateAndDisplaySummary() 
+          // จะย้ายไปใน $(async () => {}) เพื่อให้แน่ใจว่า Flatpickr ถูก initialized แล้ว
+        } catch (error) {
+          console.error("Error loading data from Google Sheets:", error);
+          alert("เกิดข้อผิดพลาดในการดึงข้อมูล: กรุณาตรวจสอบ API Key, การตั้งค่าการแชร์ Google Sheet, หรือข้อผิดพลาดจาก API Console");
+          $("#recentTable tbody").html('<tr><td colspan="7">ไม่สามารถดึงข้อมูลได้ กรุณาตรวจสอบ API Key หรือการตั้งค่า Google Sheet</td></tr>');
+          $("#summaryTable tbody").html('<tr><td colspan="6">ไม่สามารถดึงข้อมูลได้ กรุณาตรวจสอบ API Key หรือการตั้งค่า Google Sheet</td></tr>');
+        }
+      }
+
+      // ฟังก์ชันสำหรับอัปเดตตาราง "สรุปข้อมูล Cycle Time" เท่านั้น
+      function updateRecentTableDisplay() {
+        // ตรวจสอบว่า recentDatePickerInstance ถูกสร้างขึ้นแล้วและมีวันที่ถูกเลือก
+        const selectedDateFormatted = recentDatePickerInstance ? recentDatePickerInstance.input.value : null; 
+
+        if (!selectedDateFormatted) {
+            console.warn("No date selected for recentTable. Using default or stopping.");
+            $("#recentTable tbody").html('<tr><td colspan="7">กรุณาเลือกวันที่</td></tr>');
+            // ทำลาย DataTable ถ้ามีอยู่ เพื่อป้องกัน error
+            if ($.fn.DataTable.isDataTable("#recentTable")) {
+                dataTable.destroy();
+                $("#recentTable tbody").empty();
+            }
+            return; // หยุดการทำงานถ้าไม่มีวันที่เลือก
+        }
+
+        $("#dateDisplayText").text(`📅 วันที่ที่เลือก: ${selectedDateFormatted}`);
+        console.log("Selected Date for recentTable filtering:", selectedDateFormatted);
+
+        const shift = $('input[name="shiftOption"]:checked').val();
+
+        let sum = [0, 0, 0, 0, 0],
+          cnt = 0;
+
+        const filteredRows = allData.filter((r) => {
+          const rowDate = r[0]; // Column A: Date (assuming YYYY-MM-DD format from sheet)
+          const rowShift = r[8]; // Column I: Shift
+
+          // ตรวจสอบ rowDate ก่อนเปรียบเทียบ
+          const dateMatch = (rowDate && rowDate === selectedDateFormatted);
+          const shiftMatch = (shift === "all" || rowShift === shift);
+
+          return dateMatch && shiftMatch;
+        });
+
+        console.log("Filtered Rows for recentTable:", filteredRows);
+
+        const dataForTable = filteredRows.map((r) => {
+          // Ensure r[3] to r[7] are valid numbers for summation, default to 0 if not
+          sum[0] += parseFloat(r[3]) || 0; // Reject (Column D)
+          sum[1] += parseFloat(r[4]) || 0; // Cycle Shift (Column E)
+          sum[2] += parseFloat(r[5]) || 0; // Cycle Time (Column F)
+          sum[3] += parseFloat(r[6]) || 0; // Run Time (Column G)
+          sum[4] += parseFloat(r[7]) || 0; // Trim (Column H)
+          cnt++;
+          return [r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11]]; // Columns: C, D, E, F, G, H, I, J, K, L
+        });
+
+        lastMachineCount = cnt;
+
+        if ($.fn.DataTable.isDataTable("#recentTable")) {
+          dataTable.destroy();
+          $("#recentTable tbody").empty();
+        }
+
+        dataTable = $("#recentTable").DataTable({
+          data: dataForTable,
+          columns: [
+            { title: "Machine", data: 0 }, // C
+            { title: "Reject", data: 1 },    // D
+            { title: "Cycle Shift", data: 2 }, // E
+            { title: "Cycle Time", data: 3 },  // F
+            { title: "Run Time", data: 4 },    // G
+            { title: "Trim", data: 5 },      // H
+            { title: "Shift", data: 6 },     // I
+          ],
+          paging: false,
+          searching: false,
+          info: false,
+          order: [[0, "asc"]],
+          columnDefs: [
+            {
+              targets: 0,
+              type: "machine-sort",
+            },
+          ],
+          createdRow: function (row, data, dataIndex) {
+            const colJ = data[7]; // Column J (Mesh Status)
+            const colK = data[8]; // Column K (Mold Status)
+            const colL = data[9]; // Column L (Change Mold Status)
+
+            // *** ลำดับความสำคัญของเงื่อนไขการให้สี (ซับซ้อนไปน้อยซับซ้อน) ***
+            if (colJ === "Yes" && colK === "Yes" && colL === "Yes") {
+              $(row).addClass("highlight-teal"); // ยกล้างA,B,C (#00FFFF)
+            } else if (colJ === "Yes" && colL === "Yes") {
+              $(row).addClass("highlight-lightblue"); // ขัดB,C,ล้างFM (#DDA0DD)
+            } else if (colL === "Yes") {
+              $(row).addClass("highlight-aquamarine"); // ล้างFM&Ro (#98FB98)
+            } else if (colJ === "Yes" && colK === "Yes") {
+              $(row).addClass("highlight-cyan"); // ยกล้าง B,C (#99CCFF)
+            } else if (colJ === "Yes") {
+              $(row).addClass("highlight-pink"); // ขัดMold B,C (#FFCCFF)
+            }
+          },
+        });
+
+        if (cnt > 0) {
+          const avgSumDisplay = sum; // sum contains calculated sums for Reject, Cycle Shift, Cycle Time, Run Time, Trim
+          const avgRowHtml = `<tr class="average-row"><td>AVG</td>${avgSumDisplay.map((v, index) => `<td>${(v / cnt).toFixed(2)}</td>`).join("")}<td>${lastMachineCount} เครื่อง</td></tr>`;
+          $("#recentTable tbody").append(avgRowHtml);
+        }
+
+        const $colorLegend = $(".color-legend");
+        const $legendTeal = $colorLegend.find(".legend-item:nth-child(1)");
+        const $legendLightblue = $colorLegend.find(".legend-item:nth-child(2)");
+        const $legendAquamarine = $colorLegend.find(".legend-item:nth-child(3)");
+        const $legendCyan = $colorLegend.find(".legend-item:nth-child(4)");
+        const $legendPink = $colorLegend.find(".legend-item:nth-child(5)");
+
+
+        $colorLegend.hide();
+        $legendTeal.hide();
+        $legendLightblue.hide();
+        $legendAquamarine.hide();
+        $legendCyan.hide();
+        $legendPink.hide();
+
+        let hasTeal = false;
+        let hasLightblue = false;
+        let hasAquamarine = false;
+        let hasCyan = false;
+        let hasPink = false;
+
+
+        dataTable.rows().every(function () {
+          const rowNode = this.node();
+          if ($(rowNode).hasClass("highlight-teal")) {
+            hasTeal = true;
+          }
+          if ($(rowNode).hasClass("highlight-lightblue")) {
+            hasLightblue = true;
+          }
+          if ($(rowNode).hasClass("highlight-aquamarine")) {
+            hasAquamarine = true;
+          }
+          if ($(rowNode).hasClass("highlight-cyan")) {
+            hasCyan = true;
+          }
+          if ($(rowNode).hasClass("highlight-pink")) {
+            hasPink = true;
+          }
+          if (hasTeal && hasLightblue && hasAquamarine && hasCyan && hasPink) {
+            return false;
+          }
+        });
+
+        if (hasTeal || hasLightblue || hasAquamarine || hasCyan || hasPink) {
+          $colorLegend.css("display", "flex");
+          if (hasTeal) {
+            $legendTeal.show();
+          }
+          if (hasLightblue) {
+            $legendLightblue.show();
+          }
+          if (hasAquamarine) {
+            $legendAquamarine.show();
+          }
+          if (hasCyan) {
+            $legendCyan.show();
+          }
+          if (hasPink) {
+            $legendPink.show();
+          }
+        }
+      }
+
+      // Function to set the initial shift based on current time
+      function setInitialShift() {
+          const now = new Date();
+          const hour = now.getHours(); // ชั่วโมงปัจจุบัน (0-23)
+          const minute = now.getMinutes(); // นาทีปัจจุบัน (0-59)
+
+          const currentTimeInMinutes = hour * 60 + minute;
+
+          const morningShiftStart = 8 * 60;
+          const morningShiftEnd = 16 * 60 - 1;
+
+          const afternoonShiftStart = 16 * 60;
+          const afternoonShiftEnd = 24 * 60 - 1;
+
+          const nightShiftStart = 0 * 60;
+          const nightShiftEnd = 8 * 60 - 1;
+
+          if (currentTimeInMinutes >= morningShiftStart && currentTimeInMinutes <= morningShiftEnd) {
+              $('#shiftMorning').prop('checked', true);
+              console.log("ตั้งค่าเริ่มต้นเป็น: กะเช้า");
+          } else if (currentTimeInMinutes >= afternoonShiftStart && currentTimeInMinutes <= afternoonShiftEnd) {
+              $('#shiftAfternoon').prop('checked', true);
+              console.log("ตั้งค่าเริ่มต้นเป็น: กะบ่าย");
+          } else if (currentTimeInMinutes >= nightShiftStart && currentTimeInMinutes <= nightShiftEnd) {
+              $('#shiftNight').prop('checked', true);
+              console.log("ตั้งค่าเริ่มต้นเป็น: กะดึก");
+          } else {
+              $('#shiftAll').prop('checked', true);
+              console.log("ตั้งค่าเริ่มต้นเป็น: ทั้งหมด (ไม่ตรงกับกะใดๆ)");
+          }
+          updateRecentTableDisplay(); 
+      }
+
+      async function generateImageForDownload() {
+        const d = $("#dateDisplayText").text().replace("📅 วันที่ที่เลือก: ", "") || "-";
+        const s = $('input[name="shiftOption"]:checked').val();
+        const map = {
+          all: "ทั้งหมด",
+          กะเช้า: "เช้า",
+          กะบ่าย: "บ่าย",
+          กะดึก: "ดึก",
+        };
+
+        let formattedDate = d;
+        if (d !== "-") {
+          const dateParts = d.split('-');
+          if (dateParts.length === 3) {
+            const year = dateParts[0];
+            const month = dateParts[1];
+            const day = dateParts[2];
+            formattedDate = `${day}/${month}/${year}`;
+          }
+        }
+
+        const cont = document.createElement("div");
+        cont.style.padding = "14px";
+        cont.style.background = "#fff";
+        cont.style.fontFamily = "sans-serif";
+        cont.style.width = "fit-content";
+        cont.style.display = "inline-block";
+
+        const h = document.createElement("h3");
+        h.textContent = "Cycle Time Report";
+        h.style.marginTop = "5px";
+        h.style.marginBottom = "2px";
+        h.style.fontSize = "20px";
+        h.style.color = "#2b6cb0";
+
+        const summaryAndLegendContainer = document.createElement("div");
+        summaryAndLegendContainer.style.display = "flex";
+        summaryAndLegendContainer.style.alignItems = "center";
+        summaryAndLegendContainer.style.gap = "10px";
+
+        const m = document.createElement("div");
+        m.textContent = `Date: ${formattedDate} | Shift: ${map[s] || s} | ${lastMachineCount} Machine`;
+        m.style.fontSize = "10px";
+        m.style.whiteSpace = "nowrap";
+        summaryAndLegendContainer.append(m);
+
+        const $colorLegendHtml = $(".color-legend");
+        if ($colorLegendHtml.css("display") !== "none") {
+          const clonedLegend = $colorLegendHtml.clone();
+
+          clonedLegend.css({
+            margin: "0",
+            padding: "0",
+            background: "none",
+            "box-shadow": "none",
+            border: "none",
+            "font-size": "7px",
+            width: "auto",
+            display: "flex",
+            "justify-content": "flex-start",
+            gap: "3px",
+          });
+          clonedLegend.find(".legend-color").css({
+            width: "6px",
+            height: "6px",
+            border: "1px solid #ccc",
+            gap: "1px",
+          });
+          clonedLegend.find(".legend-text").css({
+            "white-space": "nowrap",
+            "font-size": "7px",
+          });
+
+          clonedLegend.find(".legend-item").each(function () {
+            if ($(this).css("display") === "none") {
+              $(this).remove();
+            }
+          });
+
+          summaryAndLegendContainer.append(clonedLegend[0]);
+        }
+
+        cont.append(h, summaryAndLegendContainer);
+
+        const newTable = document.createElement("table");
+        newTable.style.border = "1px solid #ccc";
+        newTable.style.borderCollapse = "collapse";
+        newTable.style.fontSize = "8px";
+
+        const thead = document.createElement("thead");
+        const headerRow = document.querySelector("#recentTable thead tr").cloneNode(true);
+        thead.appendChild(headerRow);
+        newTable.appendChild(thead);
+        const tbody = document.createElement("tbody");
+        dataTable.rows().every(function () {
+          const rowData = this.data();
+          const tr = document.createElement("tr");
+          for (let i = 0; i < 7; i++) {
+            const td = document.createElement("td");
+            td.textContent = rowData[i];
+            tr.appendChild(td);
+          }
+
+          const colJ = rowData[7];
+          const colK = rowData[8];
+          const colL = rowData[9];
+
+          if (colJ === "Yes" && colK === "Yes" && colL === "Yes") {
+              $(tr).addClass("highlight-teal");
+            } else if (colJ === "Yes" && colL === "Yes") {
+             $(tr).addClass("highlight-lightblue");
+            } else if (colL === "Yes") {
+              $(tr).addClass("highlight-aquamarine");
+            } else if (colJ === "Yes" && colK === "Yes") {
+              $(tr).addClass("highlight-cyan");
+            } else if (colJ === "Yes") {
+              $(tr).addClass("highlight-pink");
+            }
+
+          tbody.appendChild(tr);
+        });
+
+        const avgRowHtmlElement = document.querySelector("#recentTable tbody .average-row");
+        if (avgRowHtmlElement) {
+          tbody.appendChild(avgRowHtmlElement.cloneNode(true));
+        }
+        newTable.appendChild(tbody);
+        const headerCells = document.querySelector("#recentTable thead tr").children;
+
+        if (headerCells.length > 0) {
+          headerCells[0].style.width = "15%";
+          headerCells[1].style.width = "10%";
+          headerCells[2].style.width = "15%x";
+          headerCells[3].style.width = "15%";
+          headerCells[4].style.width = "10%";
+          headerCells[5].style.width = "10%";
+          headerCells[6].style.width = "10%";
+        } newTable.appendChild(thead); // <-- บรรทัดนี้ดูซ้ำซ้อน
+        // เนื่องจาก thead ถูก append ไปแล้วในบรรทัด newTable.appendChild(thead); ที่อยู่เหนือกว่า
+
+        newTable.querySelectorAll("th, td").forEach((cell) => {
+          cell.style.border = "1px solid #ccc";
+          cell.style.padding = "4px 5px";
+          cell.style.fontSize = "9px";
+          cell.style.whiteSpace = "nowrap";
+          cell.style.verticalAlign = "middle";
+          cell.style.textAlign = "center";
+        });
+
+        if (avgRowHtmlElement) {
+          newTable.querySelector(".average-row").style.backgroundColor = "#d8f0ff";
+          newTable.querySelector(".average-row").style.fontWeight = "bold";
+        }
+
+        cont.append(newTable);
+        document.body.appendChild(cont); // ต้อง append ก่อนถึงจะ html2canvas ได้
+        const canvas = await html2canvas(cont, {
+          scale: 2,
+        });
+        document.body.removeChild(cont); // ลบออกหลังจากได้ canvas แล้ว
+        return canvas;
+      }
+
+      async function exportRecentImage() {
+        console.log("Attempting to export image...");
+        const canvas = await generateImageForDownload();
+        if (!canvas) {
+          console.error("Canvas is null, cannot export image.");
+          return;
+        }
+
+        const d = $("#dateDisplayText").text().replace("📅 วันที่ที่เลือก: ", "") || "report";
+        const a = document.createElement("a");
+        a.download = `CycleTime_${d}.png`;
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+        console.log("Image export initiated.");
+      }
+
+      async function shareRecentImage() {
+        console.log("Attempting to share image...");
+        const canvas = await generateImageForDownload();
+        if (!canvas) {
+          console.error("Canvas is null, cannot share image.");
+          return;
+        }
+
+        const d = $("#dateDisplayText").text().replace("📅 วันที่ที่เลือก: ", "") || "report";
+        const filename = `CycleTime_${d}.png`;
+
+        try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+            if (!blob) {
+                throw new Error("Failed to create Blob from Canvas.");
+            }
+            const file = new File([blob], filename, {
+                type: "image/png",
+            });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: "Cycle Time Report",
+                    text: `Cycle Time Report for ${$("#dateDisplayText").text().replace("📅 วันที่ที่เลือก: ", "") || "-"}`,
+                });
+                console.log("Image shared successfully.");
+            } else {
+                alert("❌ อุปกรณ์ไม่รองรับการแชร์โดยตรง หรือเบราว์เซอร์ไม่รองรับ กรุณากด 'บันทึกรูปภาพ' เพื่อดาวน์โหลด");
+                console.warn("Web Share API not supported or cannot share files.");
+            }
+        } catch (error) {
+            console.error("Error sharing image:", error);
+        }
+      }
+
+      // ฟังก์ชันสำหรับคำนวณและแสดงผลรวม Run Time ตามสถานะ Mesh Status ("Yes")
+      function calculateAndDisplaySummary() {
+        const summaryData = [];
+        const machineLetter = $('#machineLetterSelect').val();
+        const machineNumber = $('#machineNumberSelect').val();
+        
+        // ดึงค่าวันที่จาก Flatpickr, ตรวจสอบว่า instances พร้อมใช้งาน
+        const startDate = summaryStartDatePickerInstance ? summaryStartDatePickerInstance.input.value : null;
+        const endDate = summaryEndDatePickerInstance ? summaryEndDatePickerInstance.input.value : null;
+
+        // หาก startDate หรือ endDate เป็นค่าว่างหรือไม่ถูกต้อง ให้หยุดการทำงาน
+        if (!startDate || !endDate) {
+            console.warn("Start or End date is missing for summary table. Cannot calculate summary.");
+            $("#summaryTable tbody").html('<tr><td colspan="6">กรุณาเลือกช่วงวันที่ให้สมบูรณ์</td></tr>');
+            // ทำลาย DataTable ถ้ามีอยู่ เพื่อป้องกัน error
+            if ($.fn.DataTable.isDataTable("#summaryTable")) {
+                summaryDataTable.destroy();
+                $("#summaryTable tbody").empty();
+            }
+            return; // หยุดการทำงานถ้าวันที่ไม่สมบูรณ์
+        }
+        console.log(`Calculating Summary for: Start Date: ${startDate}, End Date: ${endDate}, Machine: ${machineLetter}${machineNumber}`);
+
+
+        // 1. กรองข้อมูลตาม Machine และ Date Range
+        let filteredDataForSummary = allData.filter((r) => {
+          const rowDate = r[0]; // Column A: Date (assuming YYYY-MM-DD format from sheet)
+          const rowMachine = r[2]; // Column C: Mac
+
+          // ตรวจสอบให้แน่ใจว่า rowDate ไม่ใช่ undefined/null ก่อนเปรียบเทียบ
+          if (!rowDate) return false;
+
+          const dateMatch = (rowDate >= startDate && rowDate <= endDate);
+
+          let machineMatch = true;
+          if (machineLetter !== 'all' && machineNumber !== 'all') {
+            machineMatch = (rowMachine === `${machineLetter}${machineNumber}`);
+          } else if (machineLetter !== 'all') {
+            machineMatch = (rowMachine && rowMachine.startsWith(machineLetter));
+          } else if (machineNumber !== 'all') {
+            machineMatch = (rowMachine && rowMachine.endsWith(machineNumber));
+          }
+          return dateMatch && machineMatch;
+        });
+
+        // Sort data for correct sequence-based summation
+        filteredDataForSummary.sort((a, b) => {
+            const dateA = a[0];
+            const dateB = b[0];
+            if (dateA !== dateB) return dateA.localeCompare(dateB);
+
+            const machineA = a[2];
+            const machineB = b[2];
+            if (machineA !== machineB) return machineA.localeCompare(machineB);
+            
+            const shiftOrder = {"กะเช้า": 1, "กะบ่าย": 2, "กะดึก": 3, "all": 4, "": 5};
+            const shiftA = a[8] || "";
+            const shiftB = b[8] || "";
+            if (shiftOrder[shiftA] !== shiftOrder[shiftB]) {
+                return shiftOrder[shiftA] - shiftOrder[shiftB];
+            }
+            return 0;
+        });
+
+
+        // 2. คำนวณ Sum Run ตามตรรกะที่ให้มา
+        let currentSumRun = 0;
+        let segmentData = [];
+        const displayRows = [];
+
+        for (let i = 0; i < filteredDataForSummary.length; i++) {
+            const row = filteredDataForSummary[i];
+            const runTime = parseFloat(row[6]) || 0; // Column G
+            const meshStatus = row[9]; // Column J
+
+            // เพิ่มข้อมูลลงใน segmentData ก่อนเสมอ
+            segmentData.push({
+                date: row[0],
+                machine: row[2],
+                runTime: runTime,
+                shift: row[8],
+                meshStatus: meshStatus
+            });
+            currentSumRun += runTime;
+
+            // ถ้า Mesh Status เป็น "Yes" ให้บันทึกผลรวมและรีเซ็ต
+            if (meshStatus === "Yes") {
+                const lastRowInSegment = segmentData[segmentData.length - 1]; // ใช้ข้อมูลของแถวที่ทำให้เกิด "Yes"
+                displayRows.push([
+                    lastRowInSegment.date,
+                    lastRowInSegment.machine,
+                    lastRowInSegment.runTime.toFixed(2), // แสดง Run Time ของแถวปัจจุบันที่ทำให้เกิด "Yes"
+                    lastRowInSegment.shift,
+                    lastRowInSegment.meshStatus,
+                    currentSumRun.toFixed(2) // แสดงผลรวม Run Time ของ segment
+                ]);
+                
+                // รีเซ็ตสำหรับ segment ถัดไป
+                currentSumRun = 0;
+                segmentData = [];
+            }
+        }
+        console.log("Summary Display Rows:", displayRows);
+        
+        // ตรวจสอบและทำลาย DataTable เก่า
+        if ($.fn.DataTable.isDataTable("#summaryTable")) {
+          summaryDataTable.destroy();
+          $("#summaryTable tbody").empty();
+        }
+
+        // สร้าง DataTable ใหม่
+        summaryDataTable = $("#summaryTable").DataTable({
+          data: displayRows,
+          columns: [
+            { title: "Date", data: 0 },
+            { title: "Machine", data: 1 },
+            { title: "RunTime", data: 2 },
+            { title: "Shift", data: 3 },
+            { title: "Status", data: 4 },
+            { title: "Sum Time", data: 5 },
+          ],
+          paging: false,
+          searching: false,
+          info: false,
+          order: [[0, "asc"], [1, "asc"], [3, "asc"]],
+        });
+      }
+
+
+async function generateSummaryImage() {
+    const cont = document.createElement("div");
+    cont.style.padding = "20px";
+    cont.style.background = "#fff";
+    cont.style.fontFamily = "sans-serif";
+    cont.style.width = "fit-content";
+    cont.style.display = "inline-block";
+
+    const h = document.createElement("h3");
+    h.textContent = "ผลรวม Run Time ตามสถานะ Mesh Status"; // หรือเปลี่ยนเป็น "ผลสรุป Run Time และ Sum Time"
+    h.style.marginTop = "5px";
+    h.style.marginBottom = "5px";
+    h.style.fontSize = "17px";
+    h.style.color = "#2b6cb0";
+    cont.append(h);
+
+    // --- เพิ่มส่วนนี้สำหรับข้อมูล Machine No. และช่วงวันที่ ---
+    const machineLetter = $('#machineLetterSelect').val();
+    const machineNumber = $('#machineNumberSelect').val();
+    const startDate = summaryStartDatePickerInstance ? summaryStartDatePickerInstance.input.value : 'N/A';
+    const endDate = summaryEndDatePickerInstance ? summaryEndDatePickerInstance.input.value : 'N/A';
+
+    let machineInfo = '';
+    if (machineLetter !== 'all' || machineNumber !== 'all') {
+        machineInfo = `${machineLetter === 'all' ? '' : machineLetter}${machineNumber === 'all' ? '' : machineNumber}`;
+    } else {
+        machineInfo = 'All'; // เปลี่ยนจาก 'Machine No: All' เป็น 'All'
+    }
+
+    // *** ย้ายบล็อก h2 มาไว้ตรงนี้ เพื่อให้ machineInfo มีค่าแล้ว ***
+    const h2 = document.createElement("h2");
+    h2.textContent = `Machine No : ${machineInfo}`; // << แก้ไขตรงนี้
+    h2.style.marginTop = "2px";
+    h2.style.marginBottom = "2px";
+    h2.style.fontSize = "13px";
+    h2.style.color = "#2b6cb0";
+    cont.append(h2);
+    // *** สิ้นสุดการย้ายบล็อก h2 ***
+
+    // Convert dates to DD/MM/YYYY for display
+    const formatThaiDate = (dateStr) => {
+        if (!dateStr || dateStr === 'N/A') return 'N/A';
+        const parts = dateStr.split('-'); // YYYY-MM-DD
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    };
+
+    const startDateFormatted = formatThaiDate(startDate);
+    const endDateFormatted = formatThaiDate(endDate);
+
+    // --- คำนวณจำนวนครั้ง และ ค่าเฉลี่ยของ "Sum Time" ---
+    let totalCount = 0;
+    let sumOfSumTime = 0; // เพื่อรวมค่าจากคอลัมน์ "Sum Time"
+    let averageSumTime = 0; // ค่าเฉลี่ยของ "Sum Time"
+
+    // ตรวจสอบว่า summaryDataTable ถูก initialize และมีข้อมูล
+    if (summaryDataTable && summaryDataTable.rows().any()) {
+        totalCount = summaryDataTable.rows().count(); // จำนวนแถวทั้งหมด
+        summaryDataTable.rows().every(function () {
+            const rowData = this.data();
+            // ดึงค่าจากคอลัมน์ "Sum Time" ซึ่งอยู่ที่ index 5 (ตามที่คุณระบุ)
+            const sumTimeStr = rowData[5];
+            const sumTimeValue = parseFloat(sumTimeStr);
+            if (!isNaN(sumTimeValue)) {
+                sumOfSumTime += sumTimeValue;
+            }
+        });
+
+        if (totalCount > 0) {
+            averageSumTime = sumOfSumTime / totalCount;
+        }
+    }
+
+    const infoDiv = document.createElement("div");
+    infoDiv.style.fontSize = "10px";
+    infoDiv.style.marginBottom = "5px";
+    infoDiv.style.marginTop = "5px";
+    infoDiv.innerHTML = `
+        🗓️ ช่วงวันที่ : ${startDateFormatted} - ${endDateFormatted}<br>
+        📊 จำนวนเปลี่ยนMesh : ${totalCount} ครั้ง | ⏱️ AVG Sum Time : ${averageSumTime.toFixed(2)} ชม.
+    `;
+    cont.append(infoDiv);
+    // --- สิ้นสุดการเพิ่มส่วนนี้ ---
+    const newTable = document.createElement("table");
+    newTable.style.border = "1px solid #ccc";
+    newTable.style.borderCollapse = "collapse";
+    newTable.style.fontSize = "7px";
+
+    const thead = document.createElement("thead");
+    const headerRow = document.querySelector("#summaryTable thead tr").cloneNode(true);
+    thead.appendChild(headerRow);
+    newTable.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+    // ตรวจสอบว่า summaryDataTable ถูก initialize แล้ว
+    if (summaryDataTable && summaryDataTable.rows().any()) { // ตรวจสอบว่ามีข้อมูลใน DataTable
+        summaryDataTable.rows().every(function () {
+            const rowData = this.data();
+            const tr = document.createElement("tr");
+            rowData.forEach((cellData) => {
+                const td = document.createElement("td");
+                td.textContent = cellData;
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    } else {
+        // เพิ่มข้อความแสดงว่าไม่มีข้อมูลถ้าตารางว่างเปล่า
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.setAttribute("colspan", "6");
+        td.textContent = "ไม่มีข้อมูลสำหรับช่วงเวลาและเครื่องที่เลือก";
+        td.style.textAlign = "center";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+    }
+    newTable.appendChild(tbody);
+
+    newTable.querySelectorAll("th, td").forEach((cell) => {
+        cell.style.border = "1px solid #ccc";
+        cell.style.padding = "4px 5px";
+        cell.style.fontSize = "7px";
+        cell.style.whiteSpace = "nowrap";
+        cell.style.verticalAlign = "middle";
+        cell.style.textAlign = "center";
+    });
+
+    cont.append(newTable);
+    document.body.appendChild(cont);
+    const canvas = await html2canvas(cont, {
+        scale: 2,
+    });
+    document.body.removeChild(cont);
+    return canvas;
+}
+
+      async function exportSummaryImage() {
+    console.log("Attempting to export summary image...");
+    const canvas = await generateSummaryImage();
+    if (!canvas) {
+        console.error("Canvas is null, cannot export summary image.");
+        return;
+    }
+
+    const machineLetter = $('#machineLetterSelect').val();
+    const machineNumber = $('#machineNumberSelect').val();
+    const startDate = summaryStartDatePickerInstance ? summaryStartDatePickerInstance.input.value : 'N/A';
+
+    let machinePart = '';
+    if (machineLetter !== 'all' || machineNumber !== 'all') {
+        machinePart = `${machineLetter === 'all' ? '' : machineLetter}${machineNumber === 'all' ? '' : machineNumber}_`;
+    } else {
+        machinePart = 'AllMachine_';
+    }
+
+    const filename = `SummaryRunTime_${machinePart}${startDate}.png`;
+    const a = document.createElement("a");
+    a.download = filename;
+    a.href = canvas.toDataURL("image/png");
+    a.click();
+    console.log("Summary image export initiated.");
+}
+
+async function shareSummaryImage() {
+    console.log("Attempting to share summary image...");
+    const canvas = await generateSummaryImage();
+    if (!canvas) {
+        console.error("Canvas is null, cannot share summary image.");
+        return;
+    }
+
+    const machineLetter = $('#machineLetterSelect').val();
+    const machineNumber = $('#machineNumberSelect').val();
+    const startDate = summaryStartDatePickerInstance ? summaryStartDatePickerInstance.input.value : 'N/A';
+    const endDate = summaryEndDatePickerInstance ? summaryEndDatePickerInstance.input.value : 'N/A';
+
+    let machineInfoForShare = '';
+    if (machineLetter !== 'all' || machineNumber !== 'all') {
+        machineInfoForShare = `Machine No: ${machineLetter === 'all' ? '' : machineLetter}${machineNumber === 'all' ? '' : machineNumber}`;
+    } else {
+        machineInfoForShare = 'Machine No: All';
+    }
+
+    const formatThaiDate = (dateStr) => {
+        if (!dateStr || dateStr === 'N/A') return 'N/A';
+        const parts = dateStr.split('-'); // YYYY-MM-DD
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    };
+
+    const startDateFormatted = formatThaiDate(startDate);
+    const endDateFormatted = formatThaiDate(endDate);
+
+    let machinePart = '';
+    if (machineLetter !== 'all' || machineNumber !== 'all') {
+        machinePart = `${machineLetter === 'all' ? '' : machineLetter}${machineNumber === 'all' ? '' : machineNumber}_`;
+    } else {
+        machinePart = 'AllMachine_';
+    }
+    const filename = `SummaryRunTime_${machinePart}${startDate}.png`;
+
+    try {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        if (!blob) {
+            throw new Error("Failed to create Blob from Canvas.");
+        }
+        const file = new File([blob], filename, {
+            type: "image/png",
+        });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: "Run Time Summary Report",
+                text: `Run Time Summary Report:\n${machineInfoForShare}\nช่วงวันที่: ${startDateFormatted} ถึง ${endDateFormatted}`,
+            });
+            console.log("Summary image shared successfully.");
+        } else {
+            alert("❌ อุปกรณ์ไม่รองรับการแชร์โดยตรง หรือเบราว์เซอร์ไม่รองรับ กรุณากด 'บันทึกรูปภาพผลรวม' เพื่อดาวน์โหลด");
+            console.warn("Web Share API not supported or cannot share files.");
+        }
+    } catch (error) {
+        console.error("Error sharing summary image:", error);
+    }
+}
+
+      $(async () => {
+        // Initialize Flatpickr instances
+        // Recent Table Date Picker
+        recentDatePickerInstance = flatpickr("#recentDatePicker", {
+            dateFormat: "Y-m-d", // Format matching Google Sheet (e.g., 2025-07-15)
+            defaultDate: "today", // Sets default to current date
+            locale: "th", // Use Thai localization if needed
+            onChange: function(selectedDates, dateStr, instance) {
+                updateRecentTableDisplay(); // Re-filter and display data
+            }
+        });
+
+        // Summary Table Start Date Picker
+        summaryStartDatePickerInstance = flatpickr("#summaryStartDatePicker", {
+            dateFormat: "Y-m-d",
+            defaultDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // First day of current month
+            locale: "th",
+            onChange: function(selectedDates, dateStr, instance) {
+                // Ensure end date is not before start date
+                if (selectedDates.length > 0 && summaryEndDatePickerInstance.selectedDates.length > 0) {
+                    if (summaryEndDatePickerInstance.selectedDates[0] < selectedDates[0]) {
+                        summaryEndDatePickerInstance.setDate(selectedDates[0]);
+                    }
+                }
+                calculateAndDisplaySummary();
+            }
+        });
+
+        // Summary Table End Date Picker
+        summaryEndDatePickerInstance = flatpickr("#summaryEndDatePicker", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today", // Or last day of current month
+            locale: "th",
+            onChange: function(selectedDates, dateStr, instance) {
+                 // Ensure start date is not after end date
+                if (selectedDates.length > 0 && summaryStartDatePickerInstance.selectedDates.length > 0) {
+                    if (summaryStartDatePickerInstance.selectedDates[0] > selectedDates[0]) {
+                        summaryStartDatePickerInstance.setDate(selectedDates[0]);
+                    }
+                }
+                calculateAndDisplaySummary();
+            }
+        });
+
+        await loadData(); // Load data initially
+        setInitialShift(); // ตั้งค่ากะเริ่มต้นและอัปเดต recentTable
+        calculateAndDisplaySummary(); // อัปเดต summaryTable ()
+
+        $('input[name="shiftOption"]').on("change", updateRecentTableDisplay);
+        $('#machineLetterSelect, #machineNumberSelect').on('change', calculateAndDisplaySummary);
+
+        $("#exportSummaryImageBtn").on("click", exportSummaryImage);
+        $("#shareSummaryImageBtn").on("click", shareSummaryImage);
+        $("#exportRecentImageBtn").on("click", exportRecentImage);
+        $("#shareRecentImageBtn").on("click", shareRecentImage);
+      });
+    </script>
+  </body>
+</html>

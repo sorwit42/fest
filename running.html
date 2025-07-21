@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=0.5" />
+    <title>Running Time Summary</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2b6cb0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/f/favicon-32x32.png">
+    <link rel="icon" type="type/png" sizes="16x16" href="/f/favicon-16x16.png">
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"
+    />
+    <style>
+      :root {
+        --main-blue: #2b6cb0;
+        --light-blue: #d0eaff;
+        --bg: #f0f8ff;
+        --white: #ffffff;
+        --font: "Segoe UI", sans-serif;
+
+        /* Progress Bar Colors for Tables */
+        --pb-good: #4CAF50; /* Green */
+        --pb-moderate: #FFC107; /* Yellow */
+        --pb-bad: #F44336; /* Red */
+        --pb-bg: #e0e0e0; /* Grey background for empty bar */
+
+        /* Dashboard Progress Bar Colors (can reuse table colors) */
+        --dashboard-item-bg: #ffffff;
+        --dashboard-border-color: #e0e0e0;
+      }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        margin: 0;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+      h2,
+      h3 {
+        color: var(--main-blue);
+        margin-top: 10px;
+        margin-bottom: 3px;
+      text-align: center;
+      }
+      .button-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px; /* ช่องว่างระหว่างปุ่มเป็น 4% */
+        margin-bottom: 20px;
+        max-width: 400px; /* จำกัดความกว้างเพื่อให้ปุ่มไม่กว้างเกินไปเมื่ออยู่ตรงกลาง */
+        margin-left: auto; /* จัดกึ่งกลาง container */
+        margin-right: auto; /* จัดกึ่งกลาง container */
+      }
+      button {
+            padding: 12px;
+            font-size: 1rem;
+            background: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            margin-top: 12px;
+            width: 48%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: 0.2s ease-in-out;
+        }
+        button:hover {
+            background: #1f5491;
+        }
+      .table-wrapper {
+        overflow-x: auto;
+        background: var(--white);
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        margin-top: 10px;
+        padding: 10px;
+        margin-bottom: 20px;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 8px;
+      }
+      th {
+        background: var(--light-blue);
+        text-align: center;
+      }
+      td.align-left {
+        text-align: left;
+      }
+      td.align-center {
+        text-align: center;
+      }
+
+      /* Progress Bar Styles for Tables */
+      .progress-bar-container {
+        width: 100%;
+        max-width: 120px;
+        height: 18px;
+        background-color: var(--pb-bg);
+        border-radius: 9px;
+        overflow: hidden;
+        position: relative;
+        margin: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .progress-bar-fill {
+        height: 100%;
+        border-radius: 9px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+      }
+
+      .progress-bar-text {
+        position: relative;
+        color: #333;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 1;
+        text-shadow: 0px 0px 2px rgba(255,255,255,0.7);
+      }
+
+      .progress-good { background-color: var(--pb-good); }
+      .progress-moderate { background-color: var(--pb-moderate); }
+      .progress-bad { background-color: var(--pb-bad); }
+
+      /* Dashboard Specific Styles */
+      .dashboard-container {
+        background: var(--white);
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin: 15px auto;
+        max-width: 800px; /* Adjusted max-width for dashboard to allow 2 columns */
+        box-sizing: border-box;
+        display: grid; /* Use Grid for layout */
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* 2 columns, responsive */
+        gap: 20px; /* Gap between grid items */
+      }
+      .dashboard-item {
+        display: flex;
+        flex-direction: column; /* Stack FM No and its bars */
+        padding: 15px; /* Padding inside each item card */
+        border: 1px solid var(--dashboard-border-color); /* Border for each item */
+        border-radius: 8px; /* Rounded corners for each item */
+        background-color: #d0eaff; /* สีเทาอ่อนๆ */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Slight shadow for card effect */
+      }
+      .dashboard-fm-label {
+        font-weight: bold;
+        color: var(--main-blue);
+        font-size: 1.2rem; /* Slightly larger for prominence */
+        margin-bottom: 10px;
+        text-align: center; /* Center the FM No. */
+      }
+      .dashboard-bar-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px; /* Space between bars for same FM No */
+      }
+      .dashboard-bar-row:last-child {
+          margin-bottom: 0;
+      }
+      .dashboard-sub-label {
+        font-size: 0.9rem;
+        width: 70px; /* Fixed width for "Forming:", "Mold:", "Mesh:" */
+        flex-shrink: 0;
+        text-align: right;
+        padding-right: 10px;
+        color: #555;
+      }
+      .dashboard-bar-wrapper-inner {
+        flex-grow: 1;
+        height: 20px; /* Height of dashboard bars */
+        background-color: var(--pb-bg); /* Use table progress bar background */
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+      }
+      .dashboard-bar-fill-inner {
+        height: 100%;
+        border-radius: 10px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        transition: width 0.5s ease-out, background-color 0.3s ease-in-out;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end; /* Align text to the end of the fill */
+        padding-right: 8px; /* Padding for text inside bar */
+        box-sizing: border-box;
+      }
+      .dashboard-bar-text-inner {
+        color: var(--white); /* White text on fill */
+        font-weight: bold;
+        font-size: 0.8rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Text shadow for contrast */
+      }
+      .dashboard-value-display {
+        margin-left: 10px;
+        font-weight: bold;
+        color: #333;
+        width: 35px; /* Fixed width for value outside */
+        text-align: right;
+        flex-shrink: 0;
+        font-size: 0.9rem;
+      }
+
+      /* Styles for dashboard image header (hidden by default) */
+      .dashboard-image-header {
+        text-align: center;
+        margin-bottom: 15px;
+        width: 100%; /* Important for grid items */
+        grid-column: 1 / -1; /* Make it span all columns in the grid */
+        box-sizing: border-box;
+        padding: 0 10px; /* Adjust padding as needed */
+      }
+      .dashboard-image-header h2 {
+        color: var(--main-blue);
+        margin-bottom: 5px;
+        font-size: 1.5rem;
+        text-align: left;
+      }
+      .dashboard-image-header p {
+        font-size: 1rem;
+        color: #555;
+        margin-top: 0;
+      text-align: left;
+      }
+
+
+      @media (max-width: 600px) { /* สำหรับมือถือแนวตั้ง */
+        
+        table {
+          font-size: 0.75rem;
+        }
+        th,
+        td {
+          padding: 6px;
+        }
+        .progress-bar-container {
+          max-width: 80px;
+          height: 16px;
+        }
+        .progress-bar-text {
+          font-size: 0.7rem;
+        }
+        .table-wrapper {
+          padding: 5px;
+        }
+        /* Dashboard specific adjustments for small screens */
+        .dashboard-container {
+            padding: 15px;
+        }
+        .dashboard-fm-label {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+        .dashboard-sub-label {
+            width: 60px; /* Adjust width for sub-labels */
+            font-size: 0.8rem;
+        }
+        .dashboard-bar-wrapper-inner {
+            height: 18px; /* Smaller bars */
+            border-radius: 9px;
+        }
+        .dashboard-bar-fill-inner {
+            border-radius: 9px;
+            padding-right: 5px;
+        }
+        .dashboard-bar-text-inner {
+            font-size: 0.7rem;
+        }
+        .dashboard-value-display {
+            width: 30px;
+            font-size: 0.8rem;
+        }
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  </head>
+  <body>
+        <button onclick="window.location.href='/index.html?i=1'">🏠 หน้าหลัก</button>
+        <button onclick="window.location.href='/report.html?i=1'">📊 ดูประวัติล่าสุด</button>
+        <button onclick="window.location.href='/summary.html?i=1'">📄 บันทึกข้อมูลทั้งหมด</button>
+        <button onclick="window.location.href='/stamesh.html?i=1'">🪣 Mesh Creaning</button>
+
+    <h2>Overall Running Time Dashboard</h2>
+    <div class="dashboard-container" id="dashboardContainer">
+    </div>
+    <div class="button-container">
+        <button onclick="shareDashboardImage()">📤 แชร์ Dashboard</button>
+        <button onclick="exportDashboardImage()">📷 บันทึก Dashboard</button>
+    </div>
+    <h2>Forming Running Time</h2>
+    <div class="table-wrapper">
+      <table id="formingRunningTimeTable">
+        <thead>
+          <tr>
+            <th>FM No</th>
+            <th>Grade</th>
+            <th>Run_Forming</th>
+            <th>Last_Cleaning</th>
+          </tr>
+        </thead>
+        <tbody id="formingRunningTimeBody"></tbody>
+      </table>
+    </div>
+  <h2>Mold Running Time</h2>
+    <div class="table-wrapper">
+      <table id="moldRunningTimeTable">
+        <thead>
+          <tr>
+            <th>FM No</th>
+            <th>Grade</th>
+            <th>Run_Mold</th>
+            <th>Last_Cleaning</th>
+          </tr>
+        </thead>
+        <tbody id="moldRunningTimeBody"></tbody>
+      </table>
+    </div>
+    <h2>Mesh Running Time</h2>
+    <div class="table-wrapper">
+      <table id="meshRunningTimeTable">
+        <thead>
+          <tr>
+            <th>FM No</th>
+            <th>Grade</th>
+            <th>Run_Mesh</th>
+            <th>Last_Cleaning</th>
+          </tr>
+        </thead>
+        <tbody id="meshRunningTimeBody"></tbody>
+      </table>
+    </div>
+
+    <div class="button-container">
+      <button onclick="shareSummaryImage()">📤 แชร์รูปภาพตาราง</button>
+      <button onclick="exportSummaryImage()">📷 บันทึกรูปภาพตาราง</button>
+    </div>
+
+    <script>
+  const API_KEY = 'AIzaSyB_Jrjw4_H6qm4QTUUSCcz5z2A7xGL_dAQ'; 
+  const SPREADSHEET_ID = '1Nmcrwydbke_qMdMqYEH2Mk85MQzy3bsRQVSfLKP5Edw'; 
+
+      let formingDataTable;
+      let moldDataTable;
+      let meshDataTable;
+
+      // Define specific thresholds for Cleaning
+      const FORMING_MAX_DAYS_FOR_CLEANING = 300; // Example max days for Forming
+      const FORMING_MODERATE_THRESHOLD = 150;
+      const FORMING_BAD_THRESHOLD = 280;
+
+      const MOLD_MAX_DAYS_FOR_CLEANING = 200;
+      const MOLD_MODERATE_THRESHOLD = 100;
+      const MOLD_BAD_THRESHOLD = 180;
+
+      const MESH_MAX_DAYS_FOR_CLEANING = 150;
+      const MESH_MODERATE_THRESHOLD = 75;
+      const MESH_BAD_THRESHOLD = 90;
+
+      // Helper function to format date to YYYY-MM-DD
+      function getTodayDateFormatted() {
+        const n = new Date();
+        const year = n.getFullYear();
+        const month = (n.getMonth() + 1).toString().padStart(2, "0");
+        const day = n.getDate().toString().padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      // Function to render the progress bar for Forming (Tables)
+      function renderFormingProgressBar(data, type, row) {
+        if (type === 'display') {
+          const value = parseFloat(data);
+          if (isNaN(value)) {
+            return data;
+          }
+
+          let percentage = (value / FORMING_MAX_DAYS_FOR_CLEANING) * 100;
+          if (percentage > 100) percentage = 100;
+          if (percentage < 0) percentage = 0;
+
+          let colorClass = 'progress-good';
+          if (value >= FORMING_BAD_THRESHOLD) {
+            colorClass = 'progress-bad';
+          } else if (value >= FORMING_MODERATE_THRESHOLD) {
+            colorClass = 'progress-moderate';
+          }
+
+          return `
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill ${colorClass}" style="width: ${percentage}%;"></div>
+              <span class="progress-bar-text">${data}</span>
+            </div>
+          `;
+        }
+        return data;
+      }
+
+      // Function to render the progress bar for Mold (Tables)
+      function renderMoldProgressBar(data, type, row) {
+        if (type === 'display') {
+          const value = parseFloat(data);
+          if (isNaN(value)) {
+            return data;
+          }
+
+          let percentage = (value / MOLD_MAX_DAYS_FOR_CLEANING) * 100;
+          if (percentage > 100) percentage = 100;
+          if (percentage < 0) percentage = 0;
+
+          let colorClass = 'progress-good';
+          if (value >= MOLD_BAD_THRESHOLD) {
+            colorClass = 'progress-bad';
+          } else if (value >= MOLD_MODERATE_THRESHOLD) {
+            colorClass = 'progress-moderate';
+          }
+
+          return `
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill ${colorClass}" style="width: ${percentage}%;"></div>
+              <span class="progress-bar-text">${data}</span>
+            </div>
+          `;
+        }
+        return data;
+      }
+
+      // Function to render the progress bar for Mesh (Tables)
+      function renderMeshProgressBar(data, type, row) {
+        if (type === 'display') {
+          const value = parseFloat(data);
+          if (isNaN(value)) {
+            return data;
+          }
+
+          let percentage = (value / MESH_MAX_DAYS_FOR_CLEANING) * 100;
+          if (percentage > 100) percentage = 100;
+          if (percentage < 0) percentage = 0;
+
+          let colorClass = 'progress-good';
+          if (value >= MESH_BAD_THRESHOLD) {
+            colorClass = 'progress-bad';
+          } else if (value >= MESH_MODERATE_THRESHOLD) {
+            colorClass = 'progress-moderate';
+          }
+
+          return `
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill ${colorClass}" style="width: ${percentage}%;"></div>
+              <span class="progress-bar-text">${data}</span>
+            </div>
+          `;
+        }
+        return data;
+      }
+
+
+      async function loadData() {
+        try {
+            // Load Forming Running Time data
+            const formingRes = await fetch(
+              `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/CalculationSheet!A34:E48?key=${API_KEY}`
+            );
+            if (!formingRes.ok) {
+              throw new Error(`HTTP error! status: ${formingRes.status}`);
+            }
+            const formingData = (await formingRes.json()).values || [];
+
+            if ($.fn.DataTable.isDataTable("#formingRunningTimeTable")) {
+              formingDataTable.destroy();
+              $("#formingRunningTimeTable tbody").empty();
+            }
+
+            const reorderedFormingData = formingData.map(row => [row ?.[0], row ?.[1], row ?.[3], row ?.[4]]);
+
+            formingDataTable = $("#formingRunningTimeTable").DataTable({
+              data: reorderedFormingData,
+              columns: [
+                { title: "FM No", data: 0, className: "align-left" },
+                { title: "Grade", data: 1, className: "align-left" },
+                { title: "Run_Forming", data: 2, className: "align-left" },
+                { title: "Last_Cleaning", data: 3, className: "align-center" }
+              ],
+              columnDefs: [
+                {
+                  targets: 3,
+                  render: renderFormingProgressBar
+                },
+                {
+                  targets: [0, 1, 2, 3],
+                  width: 'auto'
+                },
+                { width: '10%', targets: 0 },
+                { width: '50%', targets: 1 },
+                { width: '20%', targets: 2 },
+                { width: '20%', targets: 3 }
+              ],
+              paging: true,
+              searching: false,
+              info: true,
+              order: [],
+              autoWidth: false,
+              drawCallback: function(settings) {
+              }
+            });
+
+
+          // Load Mold Running Time data
+          const moldRes = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/CalculationSheet!A2:E16?key=${API_KEY}`
+          );
+          if (!moldRes.ok) {
+            throw new Error(`HTTP error! status: ${moldRes.status}`);
+          }
+          const moldData = (await moldRes.json()).values || [];
+
+          if ($.fn.DataTable.isDataTable("#moldRunningTimeTable")) {
+            moldDataTable.destroy();
+            $("#moldRunningTimeTable tbody").empty();
+          }
+
+          const reorderedMoldData = moldData.map(row => [row ?.[0], row ?.[1], row ?.[3], row ?.[4]]);
+
+          moldDataTable = $("#moldRunningTimeTable").DataTable({
+            data: reorderedMoldData,
+            columns: [
+              { title: "FM No", data: 0, className: "align-left" },
+              { title: "Grade", data: 1, className: "align-left" },
+              { title: "Run_Mold", data: 2, className: "align-left" },
+              { title: "Last_Cleaning", data: 3, className: "align-center" }
+            ],
+            columnDefs: [
+              {
+                targets: 3,
+                render: renderMoldProgressBar
+              },
+              {
+                targets: [0, 1, 2, 3],
+                width: 'auto'
+              },
+                { width: '10%', targets: 0 },
+                { width: '50%', targets: 1 },
+                { width: '20%', targets: 2 },
+                { width: '20%', targets: 3 }
+              ],
+            paging: true,
+            searching: false,
+            info: true,
+            order: [],
+            autoWidth: false,
+            drawCallback: function(settings) {
+            }
+          });
+
+          // Load Mesh Running Time data
+          const meshRes = await fetch(
+            `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/CalculationSheet!A18:E32?key=${API_KEY}`
+          );
+          if (!meshRes.ok) {
+            throw new Error(`HTTP error! status: ${meshRes.status}`);
+          }
+          const meshData = (await meshRes.json()).values || [];
+
+          if ($.fn.DataTable.isDataTable("#meshRunningTimeTable")) {
+            meshDataTable.destroy();
+            $("#meshRunningTimeTable tbody").empty();
+          }
+
+          const reorderedMeshData = meshData.map(row => [row ?.[0], row ?.[1], row ?.[3], row ?.[4]]);
+
+           meshDataTable = $("#meshRunningTimeTable").DataTable({
+            data: reorderedMeshData,
+            columns: [
+              { title: "FM No", data: 0, className: "align-left" },
+              { title: "Grade", data: 1, className: "align-left" },
+              { title: "Run_Mesh", data: 2, className: "align-left" },
+              { title: "Last_Cleaning", data: 3, className: "align-center" }
+            ],
+            columnDefs: [
+              {
+                targets: 3,
+                render: renderMeshProgressBar
+              },
+              {
+                targets: [0, 1, 2, 3],
+                width: 'auto'
+              },
+                { width: '10%', targets: 0 },
+                { width: '50%', targets: 1 },
+                { width: '20%', targets: 2 },
+                { width: '20%', targets: 3 }
+              ],
+            paging: true,
+            searching: false,
+            info: true,
+            order: [],
+            autoWidth: false,
+            drawCallback: function(settings) {
+            }
+          });
+
+          // Load Dashboard Data after all tables are loaded
+          await loadDashboardData();
+
+        } catch (error) {
+          console.error("Error loading data from Google Sheets:", error);
+          alert(
+            "เกิดข้อผิดพลาดในการดึงข้อมูล: กรุณาตรวจสอบ API Key หรือการตั้งค่าการแชร์ Google Sheet"
+          );
+          $("#formingRunningTimeTable tbody").html(
+            '<tr><td colspan="4">ไม่สามารถดึงข้อมูลได้ กรุณาตรวจสอบ API Key หรือการตั้งค่า Google Sheet</td></tr>'
+          );
+          $("#moldRunningTimeTable tbody").html(
+            '<tr><td colspan="4">ไม่สามารถดึงข้อมูลได้ กรุณาตรวจสอบ API Key หรือการตั้งค่า Google Sheet</td></tr>'
+          );
+          $("#meshRunningTimeTable tbody").html(
+            '<tr><td colspan="4">ไม่สามารถดึงข้อมูลได้ กรุณาตรวจสอบ API Key หรือการตั้งค่า Google Sheet</td></tr>'
+          );
+          $("#dashboardContainer").html('<p style="text-align: center; color: red;">ไม่สามารถดึงข้อมูล Dashboard ได้</p>');
+        }
+      }
+
+      // --- Dashboard Functions ---
+      async function loadDashboardData() {
+        const dashboardContainer = document.getElementById('dashboardContainer');
+        dashboardContainer.innerHTML = ''; // Clear previous content
+
+        const DASHBOARD_MAX_VALUE = 350; // Max value for dashboard progress bars
+
+        try {
+            // Fetch all data ranges for dashboard, specifically Column E (index 4) for Last_Cleaning
+            // And also include Column B (index 1) for Grade
+            const [formingRes, moldRes, meshRes] = await Promise.all([
+                fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/CalculationSheet!A34:E48?key=${API_KEY}`),
+                fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/CalculationSheet!A2:E16?key=${API_KEY}`),
+                fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/CalculationSheet!A18:E32?key=${API_KEY}`)
+            ]);
+
+            const formingData = (await formingRes.json()).values || [];
+            const moldData = (await moldRes.json()).values || [];
+            const meshData = (await meshRes.json()).values || [];
+
+            const dashboardSummary = {};
+
+            // Process Forming data (Last_Cleaning is column E, index 4; Grade is column B, index 1)
+            formingData.forEach(row => {
+                const fmNo = row[0];
+                const grade = row[1] || 'N/A'; // Get grade, default to 'N/A' if empty
+                const lastCleaningValue = parseFloat(row[4]); // Column E for Last_Cleaning
+                if (fmNo) {
+                    if (!dashboardSummary[fmNo]) dashboardSummary[fmNo] = { forming: 0, mold: 0, mesh: 0, grade: grade };
+                    dashboardSummary[fmNo].forming = Math.max(dashboardSummary[fmNo].forming, isNaN(lastCleaningValue) ? 0 : lastCleaningValue);
+                    if (!dashboardSummary[fmNo].grade || dashboardSummary[fmNo].grade === 'N/A') { // Update grade if it's missing
+                      dashboardSummary[fmNo].grade = grade;
+                    }
+                }
+            });
+
+            // Process Mold data (Last_Cleaning is column E, index 4; Grade is column B, index 1)
+            moldData.forEach(row => {
+                const fmNo = row[0];
+                const grade = row[1] || 'N/A';
+                const lastCleaningValue = parseFloat(row[4]); // Column E for Last_Cleaning
+                if (fmNo) {
+                    if (!dashboardSummary[fmNo]) dashboardSummary[fmNo] = { forming: 0, mold: 0, mesh: 0, grade: grade };
+                    dashboardSummary[fmNo].mold = Math.max(dashboardSummary[fmNo].mold, isNaN(lastCleaningValue) ? 0 : lastCleaningValue);
+                     if (!dashboardSummary[fmNo].grade || dashboardSummary[fmNo].grade === 'N/A') {
+                      dashboardSummary[fmNo].grade = grade;
+                    }
+                }
+            });
+
+            // Process Mesh data (Last_Cleaning is column E, index 4; Grade is column B, index 1)
+            meshData.forEach(row => {
+                const fmNo = row[0];
+                const grade = row[1] || 'N/A';
+                const lastCleaningValue = parseFloat(row[4]); // Column E for Last_Cleaning
+                if (fmNo) {
+                    if (!dashboardSummary[fmNo]) dashboardSummary[fmNo] = { forming: 0, mold: 0, mesh: 0, grade: grade };
+                    dashboardSummary[fmNo].mesh = Math.max(dashboardSummary[fmNo].mesh, isNaN(lastCleaningValue) ? 0 : lastCleaningValue);
+                     if (!dashboardSummary[fmNo].grade || dashboardSummary[fmNo].grade === 'N/A') {
+                      dashboardSummary[fmNo].grade = grade;
+                    }
+                }
+            });
+
+            // Render dashboard items
+            // Sort FM Nos alphabetically for consistent display
+            const sortedFmNos = Object.keys(dashboardSummary).sort();
+
+            sortedFmNos.forEach(fmNo => {
+                const data = dashboardSummary[fmNo];
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'dashboard-item';
+
+                // Combined FM No and Grade header
+                const fmGradeHeader = document.createElement('div');
+                fmGradeHeader.className = 'dashboard-fm-grade-header';
+                fmGradeHeader.innerHTML = `${fmNo} <span class="dashboard-grade-inline">${data.grade || ''}</span>`;
+                itemDiv.appendChild(fmGradeHeader);
+
+                // Forming Bar
+                itemDiv.appendChild(createDashboardBarRow('Forming:', data.forming, FORMING_MAX_DAYS_FOR_CLEANING, DASHBOARD_MAX_VALUE, FORMING_MODERATE_THRESHOLD, FORMING_BAD_THRESHOLD));
+                // Mold Bar
+                itemDiv.appendChild(createDashboardBarRow('Mold:', data.mold, MOLD_MAX_DAYS_FOR_CLEANING, DASHBOARD_MAX_VALUE, MOLD_MODERATE_THRESHOLD, MOLD_BAD_THRESHOLD));
+                // Mesh Bar
+                itemDiv.appendChild(createDashboardBarRow('Mesh:', data.mesh, MESH_MAX_DAYS_FOR_CLEANING, DASHBOARD_MAX_VALUE, MESH_MODERATE_THRESHOLD, MESH_BAD_THRESHOLD));
+
+                dashboardContainer.appendChild(itemDiv);
+            });
+
+        } catch (error) {
+            console.error("Error loading dashboard data:", error);
+            dashboardContainer.innerHTML = '<p style="text-align: center; color: red;">ไม่สามารถดึงข้อมูล Dashboard ได้</p>';
+        }
+      }
+
+      // Helper to get color based on value and thresholds
+      function getProgressBarColor(value, maxDays, moderateThresh, badThresh) {
+          if (value >= badThresh) {
+              return 'var(--pb-bad)';
+          } else if (value >= moderateThresh) {
+              return 'var(--pb-moderate)';
+          } else {
+              return 'var(--pb-good)';
+          }
+      }
+
+      // Helper to create a single dashboard bar row
+      function createDashboardBarRow(label, value, currentMaxThreshold, globalMaxDisplay, moderateThresh, badThresh) {
+          const rowDiv = document.createElement('div');
+          rowDiv.className = 'dashboard-bar-row';
+
+          const subLabel = document.createElement('div');
+          subLabel.className = 'dashboard-sub-label';
+          subLabel.textContent = label;
+          rowDiv.appendChild(subLabel);
+
+          const barWrapper = document.createElement('div');
+          barWrapper.className = 'dashboard-bar-wrapper-inner';
+
+          // Percentage for the bar fill based on global max display value
+          let percentage = (value / globalMaxDisplay) * 100;
+          if (percentage > 100) percentage = 100; // Cap at 100%
+          if (percentage < 0) percentage = 0; // Ensure non-negative
+
+          const barFill = document.createElement('div');
+          barFill.className = 'dashboard-bar-fill-inner';
+          barFill.style.width = `${percentage}%`;
+          barFill.style.backgroundColor = getProgressBarColor(value, currentMaxThreshold, moderateThresh, badThresh);
+
+          const barText = document.createElement('span');
+          barText.className = 'dashboard-bar-text-inner';
+          barText.textContent = `${value}`;
+          barFill.appendChild(barText);
+          barWrapper.appendChild(barFill);
+          rowDiv.appendChild(barWrapper);
+
+          const valueDisplay = document.createElement('div');
+          valueDisplay.className = 'dashboard-value-display';
+          valueDisplay.textContent = value; // Display value explicitly outside the bar
+          rowDiv.appendChild(valueDisplay);
+
+          return rowDiv;
+      }
+
+
+      // --- PDF and Image Export functions (modified for Forming table) ---
+      function exportSummaryPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const todayFormatted = getTodayDateFormatted();
+
+        doc.setFontSize(16);
+        doc.setTextColor(43, 108, 176);
+        doc.text("Running Time Report", 14, 15);
+
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Date Generated: ${todayFormatted}`, 14, 22);
+
+        // Forming Running Time Table
+        doc.setFontSize(14);
+        doc.text("Forming Running Time", 14, 35);
+        const formingHeaders = ["FM No", "Grade", "Run_Forming", "Last_Cleaning"];
+        const formingPdfData = formingDataTable.rows().data().toArray();
+
+        doc.autoTable({
+          head: [formingHeaders],
+          body: formingPdfData,
+          startY: 40,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [43, 108, 176] },
+          columnStyles: {
+            0: { cellWidth: 30, halign: 'left' },
+            1: { cellWidth: 70, halign: 'left' },
+            2: { cellWidth: 35, halign: 'left' },
+            3: { cellWidth: 45, halign: 'center' }
+          }
+        });
+
+        // Mold Running Time Table
+        doc.setFontSize(14);
+        let finalY = doc.autoTable.previous.finalY;
+        doc.text("Mold Running Time", 14, finalY + 15);
+        const moldHeaders = ["FM No", "Grade", "Run_Mold", "Last_Cleaning"];
+        const moldPdfData = moldDataTable.rows().data().toArray();
+
+        doc.autoTable({
+          head: [moldHeaders],
+          body: moldPdfData,
+          startY: finalY + 20,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [43, 108, 176] },
+          columnStyles: {
+            0: { cellWidth: 30, halign: 'left' },
+            1: { cellWidth: 70, halign: 'left' },
+            2: { cellWidth: 35, halign: 'left' },
+            3: { cellWidth: 45, halign: 'center' }
+          }
+        });
+
+        // Mesh Running Time Table
+        doc.setFontSize(14);
+        finalY = doc.autoTable.previous.finalY;
+        doc.text("Mesh Running Time", 14, finalY + 15);
+        const meshHeaders = ["FM No", "Grade", "Run_Mesh", "Last_Cleaning"];
+        const meshPdfData = meshDataTable.rows().data().toArray();
+
+        doc.autoTable({
+          head: [meshHeaders],
+          body: meshPdfData,
+          startY: finalY + 20,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [43, 108, 176] },
+          columnStyles: {
+            0: { cellWidth: 30, halign: 'left' },
+            1: { cellWidth: 70, halign: 'left' },
+            2: { cellWidth: 35, halign: 'left' },
+            3: { cellWidth: 45, halign: 'center' }
+          }
+        });
+
+        doc.save(`RunningTime_Summary_Tables_${todayFormatted}.pdf`);
+      }
+
+      async function generateImageCanvas() {
+        const todayFormatted = getTodayDateFormatted();
+
+        const cont = document.createElement("div");
+        cont.style.padding = "10px";
+        cont.style.background = "var(--white)";
+        cont.style.fontFamily = "sans-serif";
+        cont.style.width = "fit-content";
+        cont.style.minWidth = "600px";
+        cont.style.maxWidth = "700px";
+        cont.style.boxSizing = "border-box";
+        cont.style.display = "inline-block";
+
+        const h = document.createElement("h3");
+        h.textContent = "Running Time Report";
+        h.style.marginBottom = "4px";
+        h.style.fontSize = "20px";
+        h.style.color = "#2b6cb0";
+        h.style.textAlign = "left";
+
+        const m = document.createElement("div");
+        m.textContent = `Date Generated: ${todayFormatted}`;
+        m.style.marginBottom = "10px";
+        m.style.fontSize = "12px";
+        m.style.textAlign = "left";
+
+        cont.append(h, m);
+
+        const imageColumnWidths = ['10%', '50%', '20%', '20%'];
+
+        // Forming Table for image
+        const formingTableTitle = document.createElement('h4');
+        formingTableTitle.textContent = 'Forming Running Time';
+        formingTableTitle.style.marginTop = '6px';
+        formingTableTitle.style.marginBottom = '5px';
+        formingTableTitle.style.color = '#2b6cb0';
+        formingTableTitle.style.fontSize = '16px';
+      
+        cont.appendChild(formingTableTitle);
+
+        const formingTableDiv = document.createElement("div");
+        formingTableDiv.className = "table-wrapper";
+        formingTableDiv.style.boxShadow = 'none';
+        formingTableDiv.style.marginTop = '0';
+        formingTableDiv.style.marginBottom = '10px';
+
+        const formingTableClone = document.createElement('table');
+        formingTableClone.style.width = "100%";
+        formingTableClone.style.borderCollapse = "collapse";
+        formingTableClone.style.tableLayout = "fixed";
+
+        const formingTheadClone = document.createElement('thead');
+        const formingHeaderRow = document.createElement('tr');
+        const formingHeaders = ["FM No", "Grade", "Run_Forming", "Last_Cleaning"];
+        formingHeaders.forEach((headerText, index) => {
+            const newTh = document.createElement('th');
+            newTh.textContent = headerText;
+            newTh.style.width = imageColumnWidths ?.[index] || 'auto';
+            formingHeaderRow.appendChild(newTh);
+        });
+        formingTheadClone.appendChild(formingHeaderRow);
+        formingTableClone.appendChild(formingTheadClone);
+
+        const formingTbodyClone = document.createElement('tbody');
+        const formingCurrentData = formingDataTable.rows({ page: "current" }).data().toArray();
+        formingCurrentData.forEach(rowData => {
+            const tr = document.createElement('tr');
+            rowData.forEach((cellData, index) => {
+                const td = document.createElement('td');
+                if (index === 3) {
+                    td.innerHTML = renderFormingProgressBar(cellData, 'display', rowData);
+                    td.style.textAlign = 'center';
+                } else {
+                    td.textContent = cellData;
+                    td.style.textAlign = (index === 0 || index === 1 || index === 2) ? 'left' : 'center';
+                }
+                td.style.width = imageColumnWidths ?.[index] || 'auto';
+                tr.appendChild(td);
+            });
+            formingTbodyClone.appendChild(tr);
+        });
+        formingTableClone.appendChild(formingTbodyClone);
+        formingTableDiv.appendChild(formingTableClone);
+        cont.appendChild(formingTableDiv);
+
+        // Mold Table for image
+        const moldTableTitle = document.createElement('h4');
+        moldTableTitle.textContent = 'Mold Running Time';
+        moldTableTitle.style.marginTop = '10px';
+        moldTableTitle.style.marginBottom = '5px';
+        moldTableTitle.style.color = '#2b6cb0';
+        moldTableTitle.style.fontSize = '16px';
+        cont.appendChild(moldTableTitle);
+
+        const moldTableDiv = document.createElement("div");
+        moldTableDiv.className = "table-wrapper";
+        moldTableDiv.style.boxShadow = 'none';
+        moldTableDiv.style.marginTop = '0';
+        moldTableDiv.style.marginBottom = '10px';
+
+        const moldTableClone = document.createElement('table');
+        moldTableClone.style.width = "100%";
+        moldTableClone.style.borderCollapse = "collapse";
+        moldTableClone.style.tableLayout = "fixed";
+
+        const moldTheadClone = document.createElement('thead');
+        const moldHeaderRow = document.createElement('tr');
+        const moldHeaders = ["FM No", "Grade", "Run_Mold", "Last_Cleaning"];
+        moldHeaders.forEach((headerText, index) => {
+            const newTh = document.createElement('th');
+            newTh.textContent = headerText;
+            newTh.style.width = imageColumnWidths ?.[index] || 'auto';
+            moldHeaderRow.appendChild(newTh);
+        });
+        moldTheadClone.appendChild(moldHeaderRow);
+        moldTableClone.appendChild(moldTheadClone);
+
+        const moldTbodyClone = document.createElement('tbody');
+        const moldCurrentData = moldDataTable.rows({ page: "current" }).data().toArray();
+        moldCurrentData.forEach(rowData => {
+            const tr = document.createElement('tr');
+            rowData.forEach((cellData, index) => {
+                const td = document.createElement('td');
+                if (index === 3) {
+                    td.innerHTML = renderMoldProgressBar(cellData, 'display', rowData);
+                    td.style.textAlign = 'center';
+                } else {
+                    td.textContent = cellData;
+                    td.style.textAlign = (index === 0 || index === 1 || index === 2) ? 'left' : 'center';
+                }
+                td.style.width = imageColumnWidths ?.[index] || 'auto';
+                tr.appendChild(td);
+            });
+            moldTbodyClone.appendChild(tr);
+        });
+        moldTableClone.appendChild(moldTbodyClone);
+        moldTableDiv.appendChild(moldTableClone);
+        cont.appendChild(moldTableDiv);
+
+
+        // Mesh Table for image
+        const meshTableTitle = document.createElement('h4');
+        meshTableTitle.textContent = 'Mesh Running Time';
+        meshTableTitle.style.marginTop = '10px';
+        meshTableTitle.style.marginBottom = '5px';
+        meshTableTitle.style.color = '#2b6cb0';
+        meshTableTitle.style.fontSize = '16px';
+        cont.appendChild(meshTableTitle);
+
+        const meshTableDiv = document.createElement("div");
+        meshTableDiv.className = "table-wrapper";
+        meshTableDiv.style.boxShadow = 'none';
+        meshTableDiv.style.marginTop = '0';
+        meshTableDiv.style.marginBottom = '10px';
+
+         const meshTableClone = document.createElement('table');
+        meshTableClone.style.width = "100%";
+        meshTableClone.style.borderCollapse = "collapse";
+        meshTableClone.style.tableLayout = "fixed";
+
+        const meshTheadClone = document.createElement('thead');
+        const meshHeaderRow = document.createElement('tr');
+        const meshHeaders = ["FM No", "Grade", "Run_Mesh", "Last_Cleaning"];
+        meshHeaders.forEach((headerText, index) => {
+            const newTh = document.createElement('th');
+            newTh.textContent = headerText;
+            newTh.style.width = imageColumnWidths ?.[index] || 'auto';
+            meshHeaderRow.appendChild(newTh);
+        });
+        meshTheadClone.appendChild(meshHeaderRow);
+        meshTableClone.appendChild(meshTheadClone);
+
+        const meshTbodyClone = document.createElement('tbody');
+        const meshCurrentData = meshDataTable.rows({ page: "current" }).data().toArray();
+        meshCurrentData.forEach(rowData => {
+            const tr = document.createElement('tr');
+            rowData.forEach((cellData, index) => {
+                const td = document.createElement('td');
+                if (index === 3) {
+                    td.innerHTML = renderMeshProgressBar(cellData, 'display', rowData);
+                    td.style.textAlign = 'center';
+                } else {
+                    td.textContent = cellData;
+                    td.style.textAlign = (index === 0 || index === 1 || index === 2) ? 'left' : 'center';
+                }
+                td.style.width = imageColumnWidths ?.[index] || 'auto';
+                tr.appendChild(td);
+            });
+            meshTbodyClone.appendChild(tr);
+        });
+        meshTableClone.appendChild(meshTbodyClone);
+        meshTableDiv.appendChild(meshTableClone);
+        cont.appendChild(meshTableDiv);
+
+        cont.querySelectorAll("table").forEach(tbl => {
+            tbl.style.border = "1px solid #ccc";
+            tbl.style.borderCollapse = "collapse";
+            tbl.style.fontSize = "8px";
+            tbl.style.tableLayout = "fixed";
+            tbl.querySelectorAll("th, td").forEach((cell) => {
+                cell.style.border = "1px solid #ccc";
+                cell.style.padding = "6px 8px";
+                cell.style.fontSize = "12px";
+                cell.style.whiteSpace = "nowrap";
+                cell.style.verticalAlign = "middle";
+            });
+            tbl.querySelectorAll("th").forEach((th) => {
+                th.style.background = 'var(--light-blue)';
+                th.style.textAlign = 'center';
+            });
+        });
+
+
+        document.body.appendChild(cont);
+
+        const canvas = await html2canvas(cont, {
+          scale: 2,
+          scrollY: -window.scrollY,
+          windowWidth: document.documentElement.offsetWidth,
+          windowHeight: document.documentElement.offsetHeight,
+        });
+        document.body.removeChild(cont);
+        return canvas;
+      }
+
+      async function exportSummaryImage() {
+        const canvas = await generateImageCanvas();
+        if (!canvas) {
+          alert("ไม่สามารถสร้างรูปภาพเพื่อบันทึกได้");
+          return;
+        }
+
+        const todayFormatted = getTodayDateFormatted();
+        const a = document.createElement("a");
+        a.download = `RunningTime_Summary_Tables_${todayFormatted}.png`;
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+      }
+
+      async function shareSummaryImage() {
+        const canvas = await generateImageCanvas();
+        if (!canvas) {
+          alert("ไม่สามารถสร้างรูปภาพเพื่อแชร์ได้");
+          return;
+        }
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        const file = new File([blob], "RunningTime_Summary_Tables.png", { type: "image/png" });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Running Time Report Tables",
+              text: `Running Time Summary Report (Tables) for ${getTodayDateFormatted()}`,
+            });
+          } catch (error) {
+            console.error("Error sharing image:", error);
+          }
+        } else {
+          alert("❌ อุปกรณ์ไม่รองรับการแชร์โดยตรง กรุณากด 'บันทึกรูปภาพตาราง' เพื่อดาวน์โหลด");
+        }
+      }
+
+
+      // --- Dashboard Image Export/Share Functions ---
+      async function generateDashboardImageCanvas() {
+          const dashboardContainer = document.getElementById('dashboardContainer');
+          if (!dashboardContainer) {
+              console.error("Dashboard container not found.");
+              return null;
+          }
+
+          // สร้างคอนเทนเนอร์ชั่วคราวสำหรับการเรนเดอร์ภาพ
+          const tempRenderContainer = document.createElement('div');
+          tempRenderContainer.style.background = 'var(--white)';
+          tempRenderContainer.style.padding = '20px';
+          tempRenderContainer.style.fontFamily = 'var(--font)';
+          tempRenderContainer.style.boxSizing = 'border-box';
+          tempRenderContainer.style.maxWidth = '800px'; /* จับคู่ความกว้างของคอนเทนเนอร์แดชบอร์ด */
+          tempRenderContainer.style.margin = 'auto';
+          tempRenderContainer.style.boxShadow = '0 0 15px rgba(0, 0, 0, 0.1)';
+          tempRenderContainer.style.borderRadius = '10px';
+          tempRenderContainer.style.display = 'block'; /* Ensure block display for correct layout before grid */
+
+
+          // Create header elements and append to tempRenderContainer
+          const headerDiv = document.createElement('div');
+          headerDiv.className = 'dashboard-image-header'; // Use a class for easier styling if needed
+          headerDiv.style.marginBottom = '15px';
+
+          const title = document.createElement('h2');
+          title.textContent = 'Overall Running Time Dashboard';
+          title.style.color = getComputedStyle(document.documentElement).getPropertyValue('--main-blue');
+          title.style.marginBottom = '5px';
+          title.style.fontSize = '1.5rem';
+
+          const date = document.createElement('p');
+          date.textContent = `Date Generated: ${getTodayDateFormatted()}`;
+          date.style.fontSize = '1rem';
+          date.style.color = '#555';
+          date.style.marginTop = '0';
+
+          headerDiv.appendChild(title);
+          headerDiv.appendChild(date);
+          tempRenderContainer.appendChild(headerDiv);
+
+
+          // Clone the actual dashboard content
+          const clonedDashboardContent = dashboardContainer.cloneNode(true);
+
+          // Apply necessary inline styles to the cloned elements to ensure correct rendering in canvas
+          // These styles are critical for html2canvas to render correctly as it doesn't always pick up external CSS fully
+          clonedDashboardContent.style.display = 'grid'; // Ensure grid is applied to the content itself
+          clonedDashboardContent.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+          clonedDashboardContent.style.gap = '20px';
+          clonedDashboardContent.style.padding = '0'; /* Remove padding from cloned content as outer container has it */
+          clonedDashboardContent.style.background = 'none'; /* Remove background from cloned content */
+          clonedDashboardContent.style.boxShadow = 'none'; /* Remove shadow from cloned content */
+          clonedDashboardContent.style.margin = '0'; /* Remove margin from cloned content */
+
+
+          clonedDashboardContent.querySelectorAll('.dashboard-item').forEach(item => {
+              item.style.display = 'flex';
+              item.style.flexDirection = 'column';
+              item.style.padding = '10px';
+              item.style.border = `1px solid ${getComputedStyle(document.documentElement).getPropertyValue('--dashboard-border-color')}`;
+              item.style.borderRadius = '8px';
+              item.style.backgroundColor = '#d0eaff'; /* ตรวจสอบสีพื้นหลังของภาพ */
+              item.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+              item.style.marginBottom = '0'; // Remove margin-bottom from grid items
+              item.style.borderBottom = 'none'; // Remove border-bottom from grid items
+              item.style.paddingBottom = '15px'; // Adjust padding instead
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-fm-grade-header').forEach(header => {
+              header.style.fontWeight = 'bold';
+              header.style.color = getComputedStyle(document.documentElement).getPropertyValue('--main-blue');
+              header.style.fontSize = '1.2rem';
+              header.style.marginBottom = '10px'; /* Adjusted margin */
+              header.style.textAlign = 'center';
+              header.style.whiteSpace = 'normal';
+              header.style.wordBreak = 'break-word';
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-grade-inline').forEach(span => {
+              span.style.fontWeight = 'normal';
+              span.style.color = '#666';
+              span.style.fontSize = '0.9rem';
+              span.style.marginLeft = '8px';
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-bar-row').forEach(row => {
+              row.style.display = 'flex';
+              row.style.alignItems = 'center';
+              row.style.marginBottom = '8px';
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-bar-row:last-child').forEach(row => {
+            row.style.marginBottom = '0';
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-sub-label').forEach(subLabel => {
+              subLabel.style.fontSize = '0.9rem';
+              subLabel.style.width = '70px';
+              subLabel.style.flexShrink = '0';
+              subLabel.style.textAlign = 'right';
+              subLabel.style.paddingRight = '10px';
+              subLabel.style.color = '#555';
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-bar-wrapper-inner').forEach(wrapper => {
+              wrapper.style.flexGrow = '1';
+              wrapper.style.height = '20px';
+              wrapper.style.background = getComputedStyle(document.documentElement).getPropertyValue('--pb-bg');
+              wrapper.style.borderRadius = '10px';
+              wrapper.style.position = 'relative';
+              wrapper.style.overflow = 'hidden';
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-bar-fill-inner').forEach(fill => {
+              fill.style.height = '100%';
+              fill.style.borderRadius = '10px';
+              fill.style.position = 'absolute';
+              fill.style.left = '0';
+              fill.style.top = '0';
+              fill.style.display = 'flex';
+              fill.style.alignItems = 'center';
+              fill.style.justifyContent = 'flex-end';
+              fill.style.paddingRight = '8px';
+              fill.style.boxSizing = 'border-box';
+              // Important: set background color based on actual value, not just class
+              const value = parseFloat(fill.querySelector('.dashboard-bar-text-inner').textContent);
+              const labelText = fill.closest('.dashboard-bar-row').querySelector('.dashboard-sub-label').textContent;
+              let maxDays, moderateThresh, badThresh;
+
+              if (labelText.includes('Forming')) {
+                  maxDays = FORMING_MAX_DAYS_FOR_CLEANING;
+                  moderateThresh = FORMING_MODERATE_THRESHOLD;
+                  badThresh = FORMING_BAD_THRESHOLD;
+              } else if (labelText.includes('Mold')) {
+                  maxDays = MOLD_MAX_DAYS_FOR_CLEANING;
+                  moderateThresh = MOLD_MODERATE_THRESHOLD;
+                  badThresh = MOLD_BAD_THRESHOLD;
+              } else if (labelText.includes('Mesh')) {
+                  maxDays = MESH_MAX_DAYS_FOR_CLEANING;
+                  moderateThresh = MESH_MODERATE_THRESHOLD;
+                  badThresh = MESH_BAD_THRESHOLD;
+              }
+              fill.style.backgroundColor = getProgressBarColor(value, maxDays, moderateThresh, badThresh);
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-bar-text-inner').forEach(text => {
+              text.style.color = 'var(--white)';
+              text.style.fontWeight = 'bold';
+              text.style.fontSize = '0.8rem';
+              text.style.textShadow = '1px 1px 2px rgba(0,0,0,0.5)';
+          });
+          clonedDashboardContent.querySelectorAll('.dashboard-value-display').forEach(display => {
+              display.style.marginLeft = '10px';
+              display.style.fontWeight = 'bold';
+              display.style.color = '#333';
+              display.style.width = '35px';
+              display.style.textAlign = 'right';
+              display.style.flexShrink = '0';
+              display.style.fontSize = '0.9rem';
+          });
+
+          // Append the cloned dashboard content to the temporary container
+          tempRenderContainer.appendChild(clonedDashboardContent);
+
+
+          // Append the temporary container to the body temporarily for html2canvas
+          document.body.appendChild(tempRenderContainer);
+
+          const canvas = await html2canvas(tempRenderContainer, {
+              scale: 2, // High resolution
+              scrollY: -window.scrollY,
+              windowWidth: document.documentElement.offsetWidth,
+              windowHeight: document.documentElement.offsetHeight,
+              useCORS: true
+          });
+          document.body.removeChild(tempRenderContainer);
+          return canvas;
+      }
+
+      async function exportDashboardImage() {
+          const canvas = await generateDashboardImageCanvas();
+          if (!canvas) {
+              alert("ไม่สามารถสร้างรูปภาพ Dashboard เพื่อบันทึกได้");
+              return;
+          }
+          const todayFormatted = getTodayDateFormatted();
+          const a = document.createElement("a");
+          a.download = `RunningTime_Dashboard_${todayFormatted}.png`;
+          a.href = canvas.toDataURL("image/png");
+          a.click();
+      }
+
+      async function shareDashboardImage() {
+          const canvas = await generateDashboardImageCanvas();
+          if (!canvas) {
+              alert("ไม่สามารถสร้างรูปภาพ Dashboard เพื่อแชร์ได้");
+              return;
+          }
+          const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+          const file = new File([blob], "RunningTime_Dashboard.png", { type: "image/png" });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                  await navigator.share({
+                      files: [file],
+                      title: "Running Time Dashboard",
+                      text: `Overall Running Time Dashboard for ${getTodayDateFormatted()}`,
+                  });
+              } catch (error) {
+                  console.error("Error sharing dashboard image:", error);
+              }
+          } else {
+              alert("❌ อุปกรณ์ไม่รองรับการแชร์โดยตรง กรุณากด 'บันทึก Dashboard' เพื่อดาวน์โหลด");
+          }
+      }
+
+
+      $(async () => {
+        await loadData();
+      });
+    </script>
+  </body>
+</html>

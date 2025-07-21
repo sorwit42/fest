@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="th">
+   <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=0.7" />
+      <title>Summary</title>
+      <link rel="manifest" href="/manifest.json">
+      <meta name="theme-color" content="#2b6cb0">
+      <link rel="icon" type="image/png" sizes="32x32" href="/f/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/f/favicon-16x16.png">
+      <link
+         stylesheet
+         href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css"
+         />
+      <style>
+         :root {
+         --main-blue: #2b6cb0;
+         --light-blue: #d0eaff;
+         --bg: #f0f8ff;
+         --white: #ffffff;
+         --font: "Segoe UI", sans-serif;
+         }
+         body {
+         font-family: var(--font);
+         background: var(--bg);
+         margin: 0;
+         padding: 10px;
+         box-sizing: border-box;
+         /* เพิ่ม box-sizing เพื่อให้ padding ไม่ดัน layout */
+         }
+         h2,
+         h3 {
+         color: var(--main-blue);
+         margin-top: 20px;
+         }
+         button {
+         padding: 12px;
+         font-size: 1rem;
+         background: #2b6cb0;
+         color: white;
+         border: none;
+         border-radius: 8px;
+         margin-top: 12px;
+         width: 48%;
+         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+         transition: 0.2s ease-in-out;
+         }
+         button:hover {
+         background: #1a4f8b;
+         transform: scale(1.05);
+         }
+         .table-wrapper {
+         overflow-x: auto;
+         background: var(--white);
+         border-radius: 10px;
+         box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+         margin-top: 10px;
+         padding: 10px;
+         }
+         table {
+         width: 100%;
+         border-collapse: collapse;
+         font-size: 0.9rem;
+         }
+         th,
+         td {
+         border: 1px solid #ccc;
+         padding: 8px;
+         text-align: center;
+         
+         }
+         th {
+         background: var(--light-blue);
+         }
+         /* Style for the summary row */
+         #summaryTable tfoot tr.summary-row td {
+         /* เปลี่ยนจาก tbody เป็น tfoot */
+         font-weight: bold;
+         background-color: #e6f2ff;
+         /* สีพื้นหลังที่แตกต่างกันเล็กน้อยสำหรับแถวสรุป */
+         }
+         @media (max-width: 600px) {
+         .controls {
+         flex-direction: column;
+         }
+         /* ปรับขนาดฟอนต์ของตารางบนมือถือ */
+         table {
+         font-size: 0.70rem;
+         }
+         th, td {
+         padding: 6px;
+         font-size: 0.5rem;
+         }
+         }
+      </style>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+      <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+      <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+   </head>
+   <body>
+      <button onclick="window.location.href='/index.html?i=1'">🏠 หน้าหลัก</button>
+      <button onclick="window.location.href='/report.html?i=1'">📊 ดูประวัติล่าสุด</button>
+      <button onclick="window.location.href='/running.html?i=1'">⏳ Running Time</button>
+      <button onclick="window.location.href='/stamesh.html?i=1'">🪣 Mesh Creaning</button>
+      <h2>บันทึกข้อมูลทั้งหมด (Cycle Time)</h2>
+      <div class="table-wrapper">
+         <table id="summaryTable">
+            <thead>
+               <tr>
+                  <th>Date</th>
+                  <th>Machine</th>
+                  <th>Reject</th>
+                  <th>Cycle Shift</th>
+                  <th>Cycle Time</th>
+                  <th>Run Time</th>
+                  <th>Trim</th>
+                  <th>Shift</th>
+               </tr>
+            </thead>
+            <tbody id="summaryBody"></tbody>
+            <tfoot>
+               <tr class="summary-row">
+                  <td>-</td>
+                  <td>AVG:</td>
+                  <td id="footerReject"></td>
+                  <td id="footerCycleShift"></td>
+                  <td id="footerCycleTime"></td>
+                  <td id="footerRunTime"></td>
+                  <td id="footerTrim"></td>
+                  <td>-</td>
+               </tr>
+            </tfoot>
+         </table>
+      </div>
+      <div style="text-align: center; margin-top: 10px">
+         <button onclick="shareSummaryImage()">📤 แชร์รูปภาพ</button>
+         <button onclick="exportSummaryImage()">📷 บันทึกรูปภาพ</button>
+      </div>
+      <script>
+         let summaryDataTable; // Global variable to hold DataTable instance
+         
+         // Helper function to format date to YYYY-MM-DD (for current date in PDF/Image titles)
+         function getTodayDateFormatted() {
+         const n = new Date();
+         const year = n.getFullYear();
+         const month = (n.getMonth() + 1).toString().padStart(2, "0");
+         const day = n.getDate().toString().padStart(2, "0");
+         return `${year}-${month}-${day}`;
+         }
+         
+         // Custom sorting for Date column (YYYY-MM-DD)
+         $.fn.dataTable.ext.type.order['date-yyyy-mm-dd-asc'] = function (a, b) {
+         const dateA = new Date(a);
+         const dateB = new Date(b);
+         return dateA - dateB;
+         };
+         
+         $.fn.dataTable.ext.type.order['date-yyyy-mm-dd-desc'] = function (a, b) {
+         const dateA = new Date(a);
+         const dateB = new Date(b);
+         return dateB - dateA;
+         };
+         
+         // Function to calculate and update the summary row
+         function updateSummaryRow() {
+         if (!summaryDataTable) return;
+         
+         let totalReject = 0;
+         let totalCycleShift = 0;
+         let totalCycleTime = 0;
+         let totalRunTime = 0;
+         let totalTrim = 0;
+         let rowCount = 0;
+         
+         // Iterate over the currently displayed data
+         summaryDataTable.rows({
+         search: 'applied', page: 'current'
+         }).data().each(function(row) {
+         // row[2] = Reject, row[3] = Cycle Shift, row[4] = Cycle Time, row[5] = Run Time, row[6] = Trim
+         totalReject += parseFloat(row[2]) || 0;
+         totalCycleShift += parseFloat(row[3]) || 0;
+         totalCycleTime += parseFloat(row[4]) || 0;
+         totalRunTime += parseFloat(row[5]) || 0;
+         totalTrim += parseFloat(row[6]) || 0;
+         rowCount++;
+         });
+         
+         // Calculate averages and sum
+         const avgReject = rowCount > 0 ? (totalReject / rowCount).toFixed(2): 0;
+         const avgCycleShift = rowCount > 0 ? (totalCycleShift / rowCount).toFixed(2): 0;
+         const avgCycleTime = rowCount > 0 ? (totalCycleTime / rowCount).toFixed(2): 0;
+         const avgTrim = rowCount > 0 ? (totalTrim / rowCount).toFixed(2): 0;
+         const sumRunTime = totalRunTime.toFixed(2);
+         
+         // Update the footer cells
+         $('#footerReject').text(avgReject);
+         $('#footerCycleShift').text(avgCycleShift);
+         $('#footerCycleTime').text(avgCycleTime);
+         $('#footerRunTime').text(sumRunTime);
+         $('#footerTrim').text(avgTrim);
+         }
+         
+         async function loadData() {
+         try {
+         const res = await fetch(
+         "https://sheets.googleapis.com/v4/spreadsheets/1Nmcrwydbke_qMdMqYEH2Mk85MQzy3bsRQVSfLKP5Edw/values/Cycle_Time!A2:I?key=AIzaSyB_Jrjw4_H6qm4QTUUSCcz5z2A7xGL_dAQ"
+         );
+         if (!res.ok) {
+         throw new Error(`HTTP error! status: ${res.status}`);
+         }
+         const data = (await res.json()).values || [];
+         
+         if ($.fn.DataTable.isDataTable("#summaryTable")) {
+         summaryDataTable.destroy();
+         $("#summaryTable tbody").empty();
+         }
+         
+         let dataForTable = data.map((r) => {
+         const date = r[0] || '';
+         const machine = r[2] || '';
+         const reject = parseFloat(r[3]) || 0;
+         const cycleShift = parseFloat(r[4]) || 0;
+         const cycleTime = parseFloat(r[5]) || 0;
+         const runTime = parseFloat(r[6]) || 0;
+         const trim = parseFloat(r[7]) || 0;
+         const shift = r[8] || '';
+         
+         return [date, machine, reject, cycleShift, cycleTime, runTime, trim, shift];
+         }).filter(row => row[0] !== '');
+         
+         summaryDataTable = $("#summaryTable").DataTable({
+         data: dataForTable,
+         columns: [{
+         title: "Date", data: 0, type: "date-yyyy-mm-dd"
+         },
+         {
+         title: "Machine", data: 1
+         },
+         {
+         title: "Reject", data: 2
+         },
+         {
+         title: "Cycle Shift", data: 3
+         },
+         {
+         title: "Cycle Time", data: 4
+         },
+         {
+         title: "Run Time", data: 5
+         },
+         {
+         title: "Trim", data: 6
+         },
+         {
+         title: "Shift", data: 7
+         }],
+         paging: true,
+         searching: true,
+         info: true,
+         order: [[0, "desc"]],
+         columnDefs: [{
+         defaultContent: "", targets: "_all"
+         }],
+         pageLength: 10, // กำหนดจำนวนเริ่มต้น
+         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]], // เพิ่มบรรทัดนี้
+         "drawCallback": function(settings) {
+         updateSummaryRow();
+         }
+         });
+         
+         // Initial summary row update after table is first loaded
+         updateSummaryRow();
+         
+         } catch (error) {
+         console.error("เกิดข้อผิดพลาดในการโหลดข้อมูลจาก Google Sheets:", error);
+         alert(
+         "เกิดข้อผิดพลาดในการดึงข้อมูล: กรุณาตรวจสอบ API Key หรือการตั้งค่าการแชร์ Google Sheet"
+         );
+         $("#summaryTable tbody").html(
+         '<tr><td colspan="8">ไม่สามารถดึงข้อมูลได้ กรุณาตรวจสอบ API Key หรือการตั้งค่า Google Sheet</td></tr>'
+         );
+         }
+         }
+         
+         function exportSummaryPDF() {
+         const {
+         jsPDF
+         } = window.jspdf;
+         const doc = new jsPDF();
+         const todayFormatted = getTodayDateFormatted();
+         const displayedRowCount = summaryDataTable.rows({
+         search: "applied", page: "current"
+         }).nodes().length;
+         const count = displayedRowCount;
+         
+         // แก้ไข map ให้คีย์ตรงกับค่าข้อมูลและค่าที่ต้องการให้แสดงใน PDF
+         const map = {
+         "กะเช้า": "Morning",
+         "กะบ่าย": "Afternoon",
+         "กะดึก": "Night"
+         };
+         
+         doc.setFontSize(16);
+         doc.setTextColor(43, 108, 176);
+         doc.text("Cycle Time Report", 14, 15);
+         
+         doc.setFontSize(11);
+         doc.setTextColor(0, 0, 0);
+         doc.text(
+         `Date Generated: ${todayFormatted} | Total Entries (Displayed): ${count}`,
+         14,
+         22
+         );
+         
+         const headers = summaryDataTable
+         .columns()
+         .header()
+         .toArray()
+         .map((th) => $(th).text());
+         
+         let bodyData = summaryDataTable
+         .rows({
+         search: "applied", page: "current"
+         })
+         .data()
+         .toArray()
+         .map((row) =>
+         row.map((cellData, i) => {
+         // ตรวจสอบว่าเป็นคอลัมน์ Shift (ดัชนี 7) และเป็น string
+         if (i === 7 && typeof cellData === 'string') {
+         // แปลงค่า Shift โดยใช้ map ถ้ามีค่าใน map ให้ใช้ค่าที่แปลแล้ว ไม่อย่างนั้นใช้ค่าเดิม
+         return map[cellData] || cellData;
+         }
+         return cellData;
+         })
+         );
+         
+         const summaryRowForPDF = [
+         '',
+         $('#footerReject').closest('td').prev().text(),
+         $('#footerReject').text(),
+         $('#footerCycleShift').text(),
+         $('#footerCycleTime').text(),
+         $('#footerRunTime').text(),
+         $('#footerTrim').text(),
+         '-' // ตรงนี้ยังคงเป็น '-' สำหรับ Shift ในแถวสรุป เนื่องจากเป็นค่าเฉลี่ย/รวม
+         ];
+         bodyData.push(summaryRowForPDF);
+         
+         
+         doc.autoTable({
+         head: [headers],
+         body: bodyData,
+         startY: 28,
+         styles: {
+         fontSize: 8
+         },
+         headStyles: {
+         fillColor: [43, 108, 176]
+         },
+         didDrawPage: function(data) {
+         if (data.table.body.length > 0) {
+         let lastRow = data.table.body[data.table.body.length - 1];
+         lastRow.cells.forEach(cell => {
+         cell.styles.fontStyle = 'bold';
+         cell.styles.fillColor = [230, 242, 255];
+         });
+         }
+         }
+         });
+         doc.save(`Summary_CycleTime_${todayFormatted}.pdf`);
+         }
+         
+         
+         async function generateImageCanvas() {
+         const todayFormatted = getTodayDateFormatted();
+         const displayedRowCount = summaryDataTable.rows({
+         search: "applied",
+         page: "current"
+         }).nodes().length;
+         const count = displayedRowCount;
+         // map สำหรับการสร้างรูปภาพ ไม่ได้แปลเป็นภาษาอังกฤษ หากต้องการให้รูปภาพแปลด้วย ต้องใช้ map ตัวเดียวกันกับ PDF
+         const map = {
+         "กะเช้า": "กะเช้า", "กะบ่าย": "กะบ่าย", "กะดึก": "กะดึก"
+         };
+         
+         const cont = document.createElement("div");
+         cont.style.padding = "14px";
+         cont.style.background = "#fff";
+         cont.style.fontFamily = "sans-serif";
+         cont.style.width = "fit-content";
+         cont.style.display = "inline-block";
+         cont.style.minWidth = "600px";
+         
+         const h = document.createElement("h3");
+         h.textContent = "Cycle Time Report";
+         h.style.marginBottom = "4px";
+         h.style.fontSize = "20px";
+         h.style.color = "#2b6cb0";
+         
+         const m = document.createElement("div");
+         m.textContent = `Date Generated: ${todayFormatted} | Total Entries (Displayed): ${count}`;
+         m.style.marginBottom = "10px";
+         m.style.fontSize = "12px";
+         
+         const tbl = document.createElement("table");
+         tbl.style.border = "1px solid #ccc";
+         tbl.style.borderCollapse = "collapse";
+         tbl.style.fontSize = "8px";
+         tbl.style.width = "100%";
+         tbl.style.tableLayout = "fixed";
+         
+         const thead = document.createElement("thead");
+         const headerRow = document.createElement("tr");
+         summaryDataTable
+         .columns()
+         .header()
+         .each(function (th) {
+         const newTh = document.createElement("th");
+         newTh.textContent = $(th).text();
+         headerRow.appendChild(newTh);
+         });
+         thead.appendChild(headerRow);
+         tbl.appendChild(thead);
+         
+         const tbody = document.createElement("tbody");
+         summaryDataTable
+         .rows({
+         search: "applied",
+         page: "current"
+         })
+         .every(function () {
+         const rowData = this.data();
+         const tr = document.createElement("tr");
+         rowData.forEach((cellData, i) => {
+         const td = document.createElement("td");
+         if (i === 7) {
+         td.textContent = map[cellData] || cellData;
+         } else {
+         td.textContent = cellData || '';
+         }
+         tr.appendChild(td);
+         });
+         tbody.appendChild(tr);
+         });
+         tbl.appendChild(tbody);
+         
+         const tfoot = document.createElement("tfoot");
+         const footerRow = document.createElement("tr");
+         footerRow.classList.add('summary-row');
+         
+         const footerCells = [
+         '',
+         'AVG:',
+         $('#footerReject').text(),
+         $('#footerCycleShift').text(),
+         $('#footerCycleTime').text(),
+         $('#footerRunTime').text(),
+         $('#footerTrim').text(),
+         '-'
+         ];
+         
+         footerCells.forEach(text => {
+         const td = document.createElement('td');
+         td.textContent = text;
+         footerRow.appendChild(td);
+         });
+         tfoot.appendChild(footerRow);
+         tbl.appendChild(tfoot);
+         
+         tbl.querySelectorAll("th, td").forEach((cell) => {
+         cell.style.border = "1px solid #ccc";
+         cell.style.padding = "6px 8px";
+         cell.style.fontSize = "12px";
+         cell.style.whiteSpace = "nowrap";
+         cell.style.verticalAlign = "middle";
+         cell.style.textAlign = "center";
+         });
+         
+         tbl.querySelector('tfoot .summary-row').querySelectorAll('td').forEach(td => {
+         td.style.fontWeight = 'bold';
+         td.style.backgroundColor = '#e6f2ff';
+         });
+         
+         
+         const columnWidths = ["12%", "12%", "10%", "13%", "13%", "10%", "10%", "20%"];
+         tbl.querySelectorAll("th").forEach((th,
+         index) => {
+         if (columnWidths[index]) {
+         th.style.width = columnWidths[index];
+         }
+         });
+         tbl.querySelectorAll("td").forEach((td, index) => {
+         if (columnWidths[index]) {
+         td.style.width = columnWidths[index];
+         }
+         });
+         
+         cont.append(h,
+         m,
+         tbl);
+         document.body.appendChild(cont);
+         
+         const canvas = await html2canvas(cont,
+         {
+         scale: 2,
+         scrollY: -window.scrollY,
+         windowWidth: document.documentElement.offsetWidth,
+         windowHeight: document.documentElement.offsetHeight,
+         });
+         document.body.removeChild(cont);
+         return canvas;
+         }
+         
+         async function exportSummaryImage() {
+         const canvas = await generateImageCanvas();
+         if (!canvas) {
+         alert("ไม่สามารถสร้างรูปภาพเพื่อบันทึกได้");
+         return;
+         }
+         
+         const todayFormatted = getTodayDateFormatted();
+         const a = document.createElement("a");
+         a.download = `Summary_CycleTime_${todayFormatted}.png`;
+         a.href = canvas.toDataURL("image/png");
+         a.click();
+         }
+         
+         async function shareSummaryImage() {
+         const canvas = await generateImageCanvas();
+         if (!canvas) {
+         alert("ไม่สามารถสร้างรูปภาพเพื่อแชร์ได้");
+         return;
+         }
+         
+         const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+         const file = new File([blob], "Summary_CycleTime.png", {
+         type: "image/png"
+         });
+         
+         if (navigator.canShare && navigator.canShare({
+         files: [file]
+         })) {
+         try {
+         await navigator.share({
+         files: [file],
+         title: "Cycle Time Report",
+         text: `Cycle Time Summary Report for ${getTodayDateFormatted()}`,
+         });
+         } catch (error) {
+         console.error("เกิดข้อผิดพลาดในการแชร์รูปภาพ:", error);
+         }
+         } else {
+         alert("❌ อุปกรณ์ไม่รองรับการแชร์โดยตรง กรุณากด 'บันทึกรูปภาพ' เพื่อดาวน์โหลด");
+         }
+         }
+         
+         $(async () => {
+         await loadData();
+         });
+      </script>
+   </body>
+</html>
